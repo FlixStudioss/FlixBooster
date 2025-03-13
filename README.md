@@ -22,7 +22,7 @@ A simple PowerShell script that helps you remove unwanted bloatware and tweak sy
 3. **Execute the Script**:
    - In PowerShell, tupe this script:
      ```powershell
-     irm "https://github.com/GjokoMoko/FlixBooster/raw/main/FlixBooster.ps1" | iex
+     irm "https://github.com/FlixStudioss/FlixBooster/raw/main/FlixBooster.ps1" | iex
      ```
      
 4. **Use the GUI**:
