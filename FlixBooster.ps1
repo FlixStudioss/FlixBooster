@@ -3,6 +3,14 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName PresentationFramework
 
+# Set application icon (replace the path with your .ico file)
+$iconPath = Join-Path $PSScriptRoot "FlixBooster.ico"
+if (Test-Path $iconPath) {
+    $appIcon = [System.Drawing.Icon]::ExtractAssociatedIcon($iconPath)
+} else {
+    $appIcon = [System.Drawing.SystemIcons]::Application
+}
+
 # Function to apply dark mode
 function Set-DarkMode {
     param (
@@ -47,17 +55,18 @@ $loadingForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
 $loadingForm.BackColor = [System.Drawing.Color]::FromArgb(25, 25, 30)
 $loadingForm.TransparencyKey = [System.Drawing.Color]::Turquoise
 
-# Create rounded corners effect
-$formRegion = New-Object System.Drawing.Drawing2D.GraphicsPath
-$formRegion.AddArc(0, 0, 20, 20, 180, 90)
-$formRegion.AddLine(20, 0, $loadingForm.Width - 20, 0)
-$formRegion.AddArc($loadingForm.Width - 20, 0, 20, 20, 270, 90)
-$formRegion.AddLine($loadingForm.Width, 20, $loadingForm.Width, $loadingForm.Height - 20)
-$formRegion.AddArc($loadingForm.Width - 20, $loadingForm.Height - 20, 20, 20, 0, 90)
-$formRegion.AddLine($loadingForm.Width - 20, $loadingForm.Height, 20, $loadingForm.Height)
-$formRegion.AddArc(0, $loadingForm.Height - 20, 20, 20, 90, 90)
-$formRegion.AddLine(0, $loadingForm.Height - 20, 0, 20)
-$loadingForm.Region = New-Object System.Drawing.Region($formRegion)
+# Create rounded corners for loading form
+$path = New-Object System.Drawing.Drawing2D.GraphicsPath
+$path.AddArc(0, 0, 20, 20, 180, 90)
+$path.AddLine(20, 0, $loadingForm.Width - 20, 0)
+$path.AddArc($loadingForm.Width - 20, 0, 20, 20, 270, 90)
+$path.AddLine($loadingForm.Width, 20, $loadingForm.Width, $loadingForm.Height - 20)
+$path.AddArc($loadingForm.Width - 20, $loadingForm.Height - 20, 20, 20, 0, 90)
+$path.AddLine($loadingForm.Width - 20, $loadingForm.Height, 20, $loadingForm.Height)
+$path.AddArc(0, $loadingForm.Height - 20, 20, 20, 90, 90)
+$path.AddLine(0, $loadingForm.Height - 20, 0, 20)
+$path.CloseFigure()
+$loadingForm.Region = New-Object System.Drawing.Region($path)
 
 $logoLabel = New-Object System.Windows.Forms.Label
 $logoLabel.Text = "FlixBooster"
@@ -105,33 +114,45 @@ foreach ($step in $loadingSteps) {
 # Create the main form
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "FlixBooster - System Optimization Tool"
-$form.Size = New-Object System.Drawing.Size(900, 700)
+$form.Size = New-Object System.Drawing.Size(1000, 800)
 $form.StartPosition = "CenterScreen"
-$form.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 35)
+$form.BackColor = [System.Drawing.Color]::FromArgb(25, 25, 30)
 $form.ForeColor = [System.Drawing.Color]::White
 $form.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
+$form.Padding = New-Object System.Windows.Forms.Padding(10)
 
-# Create a custom title bar panel
+# Create a custom title bar panel for branding only
 $titleBar = New-Object System.Windows.Forms.Panel
-$titleBar.Size = New-Object System.Drawing.Size(900, 40)
-$titleBar.BackColor = [System.Drawing.Color]::FromArgb(45, 45, 48)
+$titleBar.Size = New-Object System.Drawing.Size(1000, 50)
+$titleBar.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
 $titleBar.Dock = [System.Windows.Forms.DockStyle]::Top
+
+# Add logo/icon to title bar
+$logoIcon = New-Object System.Windows.Forms.PictureBox
+$logoIcon.Size = New-Object System.Drawing.Size(32, 32)
+$logoIcon.Location = New-Object System.Drawing.Point(15, 9)
+$logoIcon.BackColor = [System.Drawing.Color]::Transparent
+$logoIcon.Image = $appIcon.ToBitmap()
+$logoIcon.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::StretchImage
 
 $titleLabel = New-Object System.Windows.Forms.Label
 $titleLabel.Text = "FlixBooster"
-$titleLabel.Font = New-Object System.Drawing.Font("Segoe UI", 14, [System.Drawing.FontStyle]::Bold)
+$titleLabel.Font = New-Object System.Drawing.Font("Segoe UI", 16, [System.Drawing.FontStyle]::Bold)
 $titleLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
-$titleLabel.Location = New-Object System.Drawing.Point(10, 5)
+$titleLabel.Location = New-Object System.Drawing.Point(55, 10)
 $titleLabel.Size = New-Object System.Drawing.Size(200, 30)
 
-$titleBar.Controls.Add($titleLabel)
+$titleBar.Controls.AddRange(@($logoIcon, $titleLabel))
 $form.Controls.Add($titleBar)
 
 # Create tabs with modern styling
 $tabControl = New-Object System.Windows.Forms.TabControl
-$tabControl.Size = New-Object System.Drawing.Size(880, 600)
-$tabControl.Location = New-Object System.Drawing.Point(10, 50)
-$tabControl.BackColor = [System.Drawing.Color]::FromArgb(45, 45, 48)
+$tabControl.Size = New-Object System.Drawing.Size(980, 700)
+$tabControl.Location = New-Object System.Drawing.Point(10, 60)
+$tabControl.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
+$tabControl.Padding = New-Object System.Drawing.Point(20, 4)
+$tabControl.ItemSize = New-Object System.Drawing.Size(100, 40)
 
 # Style the tabs
 $tabControl.DrawMode = [System.Windows.Forms.TabDrawMode]::OwnerDrawFixed
@@ -140,19 +161,43 @@ $tabControl.Add_DrawItem({
     $tabPage = $sender.TabPages[$e.Index]
     $tabBounds = $sender.GetTabRect($e.Index)
     
-    # Create points for text drawing
-    $textX = $tabBounds.Left + ($tabBounds.Width - $e.Graphics.MeasureString($tabPage.Text, $sender.Font).Width) / 2
-    $textY = $tabBounds.Top + ($tabBounds.Height - $e.Graphics.MeasureString($tabPage.Text, $sender.Font).Height) / 2
-    $textPoint = New-Object System.Drawing.PointF($textX, $textY)
-    
+    # Fill background with gradient
     if ($e.Index -eq $sender.SelectedIndex) {
-        $brush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(0, 122, 204))
+        $gradientBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+            $tabBounds,
+            [System.Drawing.Color]::FromArgb(55, 55, 60),
+            [System.Drawing.Color]::FromArgb(45, 45, 50),
+            [System.Drawing.Drawing2D.LinearGradientMode]::Vertical)
     } else {
-        $brush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
+        $gradientBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+            $tabBounds,
+            [System.Drawing.Color]::FromArgb(45, 45, 48),
+            [System.Drawing.Color]::FromArgb(35, 35, 40),
+            [System.Drawing.Drawing2D.LinearGradientMode]::Vertical)
+    }
+    $e.Graphics.FillRectangle($gradientBrush, $tabBounds)
+    
+    # Add subtle border
+    if ($e.Index -eq $sender.SelectedIndex) {
+        $borderPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(0, 122, 204), 2)
+        $e.Graphics.DrawLine($borderPen, $tabBounds.Left, $tabBounds.Bottom, $tabBounds.Right, $tabBounds.Bottom)
+        $borderPen.Dispose()
     }
     
-    $e.Graphics.DrawString($tabPage.Text, $sender.Font, $brush, $textPoint)
-    $brush.Dispose()
+    # Calculate text position for center alignment
+    $textSize = $e.Graphics.MeasureString($tabPage.Text, $sender.Font)
+    $textX = $tabBounds.Left + ($tabBounds.Width - $textSize.Width) / 2
+    $textY = $tabBounds.Top + ($tabBounds.Height - $textSize.Height) / 2
+    $textPoint = New-Object System.Drawing.PointF($textX, $textY)
+    
+    # Draw text with anti-aliasing
+    $e.Graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::ClearTypeGridFit
+    $textBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
+    $e.Graphics.DrawString($tabPage.Text, $sender.Font, $textBrush, $textPoint)
+    
+    # Clean up
+    $gradientBrush.Dispose()
+    $textBrush.Dispose()
 })
 
 # Debloat tab with enhanced styling
@@ -163,13 +208,13 @@ $tabDebloat.Padding = New-Object System.Windows.Forms.Padding(10)
 
 # Enhanced CheckedListBox styling
 $checkListDebloat = New-Object System.Windows.Forms.CheckedListBox
-$checkListDebloat.Size = New-Object System.Drawing.Size(850, 450)
+$checkListDebloat.Size = New-Object System.Drawing.Size(950, 500)
 $checkListDebloat.Location = New-Object System.Drawing.Point(10, 10)
-$checkListDebloat.BackColor = [System.Drawing.Color]::FromArgb(45, 45, 50)
+$checkListDebloat.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
 $checkListDebloat.ForeColor = [System.Drawing.Color]::White
 $checkListDebloat.BorderStyle = [System.Windows.Forms.BorderStyle]::None
-$checkListDebloat.Font = New-Object System.Drawing.Font("Segoe UI", 10)
-$checkListDebloat.ItemHeight = 25
+$checkListDebloat.Font = New-Object System.Drawing.Font("Segoe UI", 11)
+$checkListDebloat.ItemHeight = 30
 
 # List of bloatware apps
 $bloatwareApps = @(
@@ -244,9 +289,9 @@ foreach ($tweak in $tweaks) {
 
 # Create buttons for Debloat tab
 $btnRemoveSelected = New-Object System.Windows.Forms.Button
-$btnRemoveSelected.Size = New-Object System.Drawing.Size(250, 45)
-$btnRemoveSelected.Location = New-Object System.Drawing.Point(10, 470)
-$btnRemoveSelected.Text = [char]::ConvertFromUtf32(0x1F5D1) + " Remove Selected Apps"
+$btnRemoveSelected.Size = New-Object System.Drawing.Size(300, 50)
+$btnRemoveSelected.Location = New-Object System.Drawing.Point(10, 520)
+$btnRemoveSelected.Text = "Remove Selected Apps"
 $btnRemoveSelected.BackColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
 $btnRemoveSelected.ForeColor = [System.Drawing.Color]::White
 $btnRemoveSelected.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
@@ -254,9 +299,9 @@ $btnRemoveSelected.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System
 $btnRemoveSelected.Cursor = [System.Windows.Forms.Cursors]::Hand
 
 $btnSelectAll = New-Object System.Windows.Forms.Button
-$btnSelectAll.Size = New-Object System.Drawing.Size(250, 45)
-$btnSelectAll.Location = New-Object System.Drawing.Point(270, 470)
-$btnSelectAll.Text = [char]::ConvertFromUtf32(0x2713) + " Select All"
+$btnSelectAll.Size = New-Object System.Drawing.Size(300, 50)
+$btnSelectAll.Location = New-Object System.Drawing.Point(320, 520)
+$btnSelectAll.Text = "Select All"
 $btnSelectAll.BackColor = [System.Drawing.Color]::FromArgb(60, 60, 65)
 $btnSelectAll.ForeColor = [System.Drawing.Color]::White
 $btnSelectAll.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
@@ -280,16 +325,19 @@ $btnSelectAll.Add_MouseLeave({
 
 # Status label
 $statusLabel = New-Object System.Windows.Forms.Label
-$statusLabel.Size = New-Object System.Drawing.Size(850, 30)
-$statusLabel.Location = New-Object System.Drawing.Point(10, 525)
-$statusLabel.Font = New-Object System.Drawing.Font("Segoe UI", 9)
+$statusLabel.Size = New-Object System.Drawing.Size(950, 40)
+$statusLabel.Location = New-Object System.Drawing.Point(10, 580)
+$statusLabel.Font = New-Object System.Drawing.Font("Segoe UI", 11)
 $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
 $statusLabel.Text = "Ready to optimize your system"
+$statusLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
+$statusLabel.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 35)
+$statusLabel.Padding = New-Object System.Windows.Forms.Padding(10, 0, 0, 0)
 
 # Create buttons for Tweaks tab
 $btnApplyTweaks = New-Object System.Windows.Forms.Button
-$btnApplyTweaks.Size = New-Object System.Drawing.Size(250, 45)
-$btnApplyTweaks.Location = New-Object System.Drawing.Point(10, 470)
+$btnApplyTweaks.Size = New-Object System.Drawing.Size(300, 50)
+$btnApplyTweaks.Location = New-Object System.Drawing.Point(10, 520)
 $btnApplyTweaks.Text = "Apply Selected Tweaks"
 $btnApplyTweaks.BackColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
 $btnApplyTweaks.ForeColor = [System.Drawing.Color]::White
@@ -298,9 +346,9 @@ $btnApplyTweaks.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Dr
 $btnApplyTweaks.Cursor = [System.Windows.Forms.Cursors]::Hand
 
 $btnSelectAllTweaks = New-Object System.Windows.Forms.Button
-$btnSelectAllTweaks.Size = New-Object System.Drawing.Size(250, 45)
-$btnSelectAllTweaks.Location = New-Object System.Drawing.Point(270, 470)
-$btnSelectAllTweaks.Text = [char]::ConvertFromUtf32(0x2713) + " Select All Tweaks"
+$btnSelectAllTweaks.Size = New-Object System.Drawing.Size(300, 50)
+$btnSelectAllTweaks.Location = New-Object System.Drawing.Point(320, 520)
+$btnSelectAllTweaks.Text = "Select All Tweaks"
 $btnSelectAllTweaks.BackColor = [System.Drawing.Color]::FromArgb(60, 60, 65)
 $btnSelectAllTweaks.ForeColor = [System.Drawing.Color]::White
 $btnSelectAllTweaks.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
@@ -309,7 +357,7 @@ $btnSelectAllTweaks.Cursor = [System.Windows.Forms.Cursors]::Hand
 
 # Add button click events
 $btnRemoveSelected.Add_Click({
-    $statusLabel.Text = "⚡ Processing..."
+    $statusLabel.Text = 'Processing...'
     $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
     $form.Refresh()
     
@@ -320,23 +368,23 @@ $btnRemoveSelected.Add_Click({
     foreach ($app in $selectedApps) {
         try {
             $current++
-            $statusLabel.Text = "Removing $app... ($current of $total)"
+            $statusLabel.Text = ('Removing {0}... ({1} of {2})' -f $app, $current, $total)
             $form.Refresh()
             
             Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage
             Start-Sleep -Milliseconds 100
         }
         catch {
-            $statusLabel.Text = "Failed to remove $app"
+            $statusLabel.Text = ('Failed to remove {0}' -f $app)
             $statusLabel.ForeColor = [System.Drawing.Color]::Red
         }
     }
     
-    $statusLabel.Text = "✅ Operation completed successfully!"
+    $statusLabel.Text = 'Operation completed successfully!'
     $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
     [System.Windows.Forms.MessageBox]::Show(
-        "Selected apps have been removed successfully!",
-        "Success",
+        'Selected apps have been removed successfully!',
+        'Success',
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Information
     )
@@ -349,7 +397,7 @@ $btnSelectAll.Add_Click({
 })
 
 $btnApplyTweaks.Add_Click({
-    $statusLabel.Text = "⚡ Applying tweaks..."
+    $statusLabel.Text = 'Applying tweaks...'
     $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
     $form.Refresh()
     
@@ -360,43 +408,42 @@ $btnApplyTweaks.Add_Click({
     foreach ($tweak in $selectedTweaks) {
         try {
             $current++
-            $statusLabel.Text = "Applying $tweak... ($current of $total)"
+            $statusLabel.Text = ('Applying {0}... ({1} of {2})' -f $tweak, $current, $total)
             $form.Refresh()
             
             switch ($tweak) {
-                "Disable Telemetry" {
-                    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" -Name "AllowTelemetry" -Type DWord -Value 0
+                'Disable Telemetry' {
+                    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection' -Name 'AllowTelemetry' -Type DWord -Value 0
                 }
-                "Enable Ultimate Performance Power Plan" {
+                'Enable Ultimate Performance Power Plan' {
                     powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
                 }
-                "Optimize Network Settings" {
-                    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "TCPNoDelay" -Type DWord -Value 1
-                    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "TCP1323Opts" -Type DWord -Value 1
+                'Optimize Network Settings' {
+                    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters' -Name 'TCPNoDelay' -Type DWord -Value 1
+                    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters' -Name 'TCP1323Opts' -Type DWord -Value 1
                 }
-                "Disable Windows Search Indexing" {
-                    Stop-Service "WSearch" -Force
-                    Set-Service "WSearch" -StartupType Disabled
+                'Disable Windows Search Indexing' {
+                    Stop-Service 'WSearch' -Force
+                    Set-Service 'WSearch' -StartupType Disabled
                 }
-                "Optimize SSD Settings" {
+                'Optimize SSD Settings' {
                     fsutil behavior set DisableLastAccess 1
                     fsutil behavior set EncryptPagingFile 0
                 }
-                # Add implementations for other tweaks
             }
             Start-Sleep -Milliseconds 50
         }
         catch {
-            $statusLabel.Text = "Failed to apply $tweak"
+            $statusLabel.Text = ('Failed to apply {0}' -f $tweak)
             $statusLabel.ForeColor = [System.Drawing.Color]::Red
         }
     }
     
-    $statusLabel.Text = "✅ All tweaks applied successfully!"
+    $statusLabel.Text = 'All tweaks applied successfully!'
     $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
     [System.Windows.Forms.MessageBox]::Show(
-        "Selected tweaks have been applied successfully!",
-        "Success",
+        'Selected tweaks have been applied successfully!',
+        'Success',
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Information
     )
@@ -430,21 +477,25 @@ $tabCustomize.Padding = New-Object System.Windows.Forms.Padding(10)
 # Create groups in Customize tab
 $grpAppearance = New-Object System.Windows.Forms.GroupBox
 $grpAppearance.Text = "Appearance"
-$grpAppearance.Size = New-Object System.Drawing.Size(400, 200)
+$grpAppearance.Size = New-Object System.Drawing.Size(460, 250)
 $grpAppearance.Location = New-Object System.Drawing.Point(10, 10)
 $grpAppearance.ForeColor = [System.Drawing.Color]::White
-$grpAppearance.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$grpAppearance.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+$grpAppearance.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
+$grpAppearance.Padding = New-Object System.Windows.Forms.Padding(15)
 
 $grpPerformance = New-Object System.Windows.Forms.GroupBox
 $grpPerformance.Text = "Performance"
-$grpPerformance.Size = New-Object System.Drawing.Size(400, 200)
-$grpPerformance.Location = New-Object System.Drawing.Point(420, 10)
+$grpPerformance.Size = New-Object System.Drawing.Size(460, 250)
+$grpPerformance.Location = New-Object System.Drawing.Point(480, 10)
 $grpPerformance.ForeColor = [System.Drawing.Color]::White
-$grpPerformance.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$grpPerformance.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+$grpPerformance.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
+$grpPerformance.Padding = New-Object System.Windows.Forms.Padding(15)
 
 # Dark Mode Toggle
 $darkModeToggle = New-Object System.Windows.Forms.CheckBox
-$darkModeToggle.Text = [char]::ConvertFromUtf32(0x1F319) + " Dark Mode"
+$darkModeToggle.Text = "Dark Mode"
 $darkModeToggle.Size = New-Object System.Drawing.Size(350, 30)
 $darkModeToggle.Location = New-Object System.Drawing.Point(20, 30)
 $darkModeToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
@@ -462,7 +513,7 @@ $darkModeToggle.Add_Click({
 
 # Performance Optimization Button
 $btnOptimizePerformance = New-Object System.Windows.Forms.Button
-$btnOptimizePerformance.Text = [char]::ConvertFromUtf32(0x26A1) + " Optimize Performance"
+$btnOptimizePerformance.Text = "Optimize Performance"
 $btnOptimizePerformance.Size = New-Object System.Drawing.Size(350, 40)
 $btnOptimizePerformance.Location = New-Object System.Drawing.Point(20, 30)
 $btnOptimizePerformance.BackColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
@@ -517,9 +568,10 @@ $form.Controls.Add($statusLabel)
 
 # Complete loading
 $progressBar.Value = 100
-$loadingLabel.Text = "Ready!"
+$loadingLabel.Text = 'Ready!'
 Start-Sleep -Milliseconds 200
 $loadingForm.Close()
 
 # Show the form
+$form.Icon = $appIcon
 $form.ShowDialog()
