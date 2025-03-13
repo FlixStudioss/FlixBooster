@@ -47,13 +47,17 @@ $loadingForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
 $loadingForm.BackColor = [System.Drawing.Color]::FromArgb(25, 25, 30)
 $loadingForm.TransparencyKey = [System.Drawing.Color]::Turquoise
 
-# Create rounded corners for loading form
-$path = New-Object System.Drawing.Drawing2D.GraphicsPath
-$path.AddArc(0, 0, 20, 20, 180, 90)
-$path.AddArc($loadingForm.Width - 20, 0, 20, 20, 270, 90)
-$path.AddArc($loadingForm.Width - 20, $loadingForm.Height - 20, 20, 20, 0, 90)
-$path.AddArc(0, $loadingForm.Height - 20, 20, 20, 90, 90)
-$loadingForm.Region = [System.Drawing.Region]::FromHrgn($path.GetHrgn([System.Drawing.Graphics]::FromHwnd([System.IntPtr]::Zero)))
+# Create rounded corners effect
+$formRegion = New-Object System.Drawing.Drawing2D.GraphicsPath
+$formRegion.AddArc(0, 0, 20, 20, 180, 90)
+$formRegion.AddLine(20, 0, $loadingForm.Width - 20, 0)
+$formRegion.AddArc($loadingForm.Width - 20, 0, 20, 20, 270, 90)
+$formRegion.AddLine($loadingForm.Width, 20, $loadingForm.Width, $loadingForm.Height - 20)
+$formRegion.AddArc($loadingForm.Width - 20, $loadingForm.Height - 20, 20, 20, 0, 90)
+$formRegion.AddLine($loadingForm.Width - 20, $loadingForm.Height, 20, $loadingForm.Height)
+$formRegion.AddArc(0, $loadingForm.Height - 20, 20, 20, 90, 90)
+$formRegion.AddLine(0, $loadingForm.Height - 20, 0, 20)
+$loadingForm.Region = New-Object System.Drawing.Region($formRegion)
 
 $logoLabel = New-Object System.Windows.Forms.Label
 $logoLabel.Text = "FlixBooster"
@@ -128,27 +132,27 @@ $tabControl = New-Object System.Windows.Forms.TabControl
 $tabControl.Size = New-Object System.Drawing.Size(880, 600)
 $tabControl.Location = New-Object System.Drawing.Point(10, 50)
 $tabControl.BackColor = [System.Drawing.Color]::FromArgb(45, 45, 48)
-$tabControl.Region = [System.Drawing.Region]::FromHrgn(
-    [System.Drawing.Drawing2D.GraphicsPath]::new().GetHrgn([System.Drawing.Graphics]::FromHwnd([System.IntPtr]::Zero))
-)
 
 # Style the tabs
 $tabControl.DrawMode = [System.Windows.Forms.TabDrawMode]::OwnerDrawFixed
 $tabControl.Add_DrawItem({
-    param($tabControl, $e)
-    $tabPage = $tabControl.TabPages[$e.Index]
-    $tabBounds = $tabControl.GetTabRect($e.Index)
-    $sf = [System.Drawing.StringFormat]::new()
-    $sf.Alignment = [System.Drawing.StringAlignment]::Center
-    $sf.LineAlignment = [System.Drawing.StringAlignment]::Center
+    param($sender, $e)
+    $tabPage = $sender.TabPages[$e.Index]
+    $tabBounds = $sender.GetTabRect($e.Index)
     
-    if ($e.Index -eq $tabControl.SelectedIndex) {
-        $brush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(0, 122, 204))
+    # Create points for text drawing
+    $textX = $tabBounds.Left + ($tabBounds.Width - $e.Graphics.MeasureString($tabPage.Text, $sender.Font).Width) / 2
+    $textY = $tabBounds.Top + ($tabBounds.Height - $e.Graphics.MeasureString($tabPage.Text, $sender.Font).Height) / 2
+    $textPoint = New-Object System.Drawing.PointF($textX, $textY)
+    
+    if ($e.Index -eq $sender.SelectedIndex) {
+        $brush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(0, 122, 204))
     } else {
-        $brush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::White)
+        $brush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
     }
     
-    $e.Graphics.DrawString($tabPage.Text, $tabControl.Font, $brush, $tabBounds, $sf)
+    $e.Graphics.DrawString($tabPage.Text, $sender.Font, $brush, $textPoint)
+    $brush.Dispose()
 })
 
 # Debloat tab with enhanced styling
