@@ -290,8 +290,13 @@ $bloatwareApps = @(
     @{Name="Microsoft.WindowsAlarms"; Description="Alarms & Clock"}
 )
 
+# Modify how we add items to the CheckedListBox
+$checkListDebloat.Items.Clear()
 foreach ($app in $bloatwareApps) {
-    $checkListDebloat.Items.Add($app.Description, $false)
+    [void]$checkListDebloat.Items.Add([PSCustomObject]@{
+        Name = $app.Name
+        Description = $app.Description
+    })
 }
 
 # Modify the DrawItem event handler
@@ -301,8 +306,8 @@ $checkListDebloat.Add_DrawItem({
     
     if ($e.Index -lt 0) { return }
     
-    $app = $bloatwareApps[$e.Index]
-    $isInstalled = Test-AppInstalled -AppName $app.Name
+    $item = $sender.Items[$e.Index]
+    $isInstalled = Test-AppInstalled -AppName $item.Name
     
     # Draw background
     $e.DrawBackground()
@@ -319,7 +324,7 @@ $checkListDebloat.Add_DrawItem({
     # Draw text with padding after the circle
     $textBrush = New-Object System.Drawing.SolidBrush($sender.ForeColor)
     $textPoint = New-Object System.Drawing.Point($e.Bounds.X + 35, $e.Bounds.Y + 5)
-    $e.Graphics.DrawString($app.Description, $e.Font, $textBrush, $textPoint)
+    $e.Graphics.DrawString($item.Description, $e.Font, $textBrush, $textPoint)
     
     # Draw checkbox
     if ($sender.GetItemChecked($e.Index)) {
@@ -457,7 +462,7 @@ $btnSelectAllTweaks.Cursor = [System.Windows.Forms.Cursors]::Hand
 # Add button click events
 $btnRemoveSelected.Add_Click({
     $selectedIndices = $checkListDebloat.CheckedIndices
-    $selectedApps = $selectedIndices | ForEach-Object { $bloatwareApps[$_] }
+    $selectedApps = $selectedIndices | ForEach-Object { $checkListDebloat.Items[$_] }
     
     $criticalApps = $selectedApps | Where-Object { Test-CriticalApp $_.Name }
     if ($criticalApps) {
@@ -583,7 +588,7 @@ $tabCustomize.Padding = New-Object System.Windows.Forms.Padding(10)
 # Create groups in Customize tab
 $grpAppearance = New-Object System.Windows.Forms.GroupBox
 $grpAppearance.Text = "Appearance"
-$grpAppearance.Size = New-Object System.Drawing.Size(460, 250)
+$grpAppearance.Size = New-Object System.Drawing.Size(460, 300)
 $grpAppearance.Location = New-Object System.Drawing.Point(10, 10)
 $grpAppearance.ForeColor = [System.Drawing.Color]::White
 $grpAppearance.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
@@ -592,32 +597,54 @@ $grpAppearance.Padding = New-Object System.Windows.Forms.Padding(15)
 
 $grpPerformance = New-Object System.Windows.Forms.GroupBox
 $grpPerformance.Text = "Performance"
-$grpPerformance.Size = New-Object System.Drawing.Size(460, 250)
+$grpPerformance.Size = New-Object System.Drawing.Size(460, 300)
 $grpPerformance.Location = New-Object System.Drawing.Point(480, 10)
 $grpPerformance.ForeColor = [System.Drawing.Color]::White
 $grpPerformance.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $grpPerformance.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
 $grpPerformance.Padding = New-Object System.Windows.Forms.Padding(15)
 
-# Dark Mode Toggle
+$grpPrivacy = New-Object System.Windows.Forms.GroupBox
+$grpPrivacy.Text = "Privacy"
+$grpPrivacy.Size = New-Object System.Drawing.Size(460, 300)
+$grpPrivacy.Location = New-Object System.Drawing.Point(10, 320)
+$grpPrivacy.ForeColor = [System.Drawing.Color]::White
+$grpPrivacy.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+$grpPrivacy.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
+$grpPrivacy.Padding = New-Object System.Windows.Forms.Padding(15)
+
+$grpSystem = New-Object System.Windows.Forms.GroupBox
+$grpSystem.Text = "System"
+$grpSystem.Size = New-Object System.Drawing.Size(460, 300)
+$grpSystem.Location = New-Object System.Drawing.Point(480, 320)
+$grpSystem.ForeColor = [System.Drawing.Color]::White
+$grpSystem.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+$grpSystem.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
+$grpSystem.Padding = New-Object System.Windows.Forms.Padding(15)
+
+# Appearance Options
 $darkModeToggle = New-Object System.Windows.Forms.CheckBox
 $darkModeToggle.Text = "Dark Mode"
 $darkModeToggle.Size = New-Object System.Drawing.Size(350, 30)
 $darkModeToggle.Location = New-Object System.Drawing.Point(20, 30)
 $darkModeToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
 $darkModeToggle.ForeColor = [System.Drawing.Color]::White
-$darkModeToggle.Add_Click({
-    $result = Set-DarkMode -Enable $this.Checked
-    if ($result) {
-        $statusLabel.Text = "Dark mode " + $(if ($this.Checked) { "enabled" } else { "disabled" })
-        $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
-    } else {
-        $statusLabel.Text = "Failed to change dark mode setting"
-        $statusLabel.ForeColor = [System.Drawing.Color]::Red
-    }
-})
 
-# Performance Optimization Button
+$transparencyToggle = New-Object System.Windows.Forms.CheckBox
+$transparencyToggle.Text = "Disable Transparency"
+$transparencyToggle.Size = New-Object System.Drawing.Size(350, 30)
+$transparencyToggle.Location = New-Object System.Drawing.Point(20, 70)
+$transparencyToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$transparencyToggle.ForeColor = [System.Drawing.Color]::White
+
+$showFileExtToggle = New-Object System.Windows.Forms.CheckBox
+$showFileExtToggle.Text = "Show File Extensions"
+$showFileExtToggle.Size = New-Object System.Drawing.Size(350, 30)
+$showFileExtToggle.Location = New-Object System.Drawing.Point(20, 110)
+$showFileExtToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$showFileExtToggle.ForeColor = [System.Drawing.Color]::White
+
+# Performance Options
 $btnOptimizePerformance = New-Object System.Windows.Forms.Button
 $btnOptimizePerformance.Text = "Optimize Performance"
 $btnOptimizePerformance.Size = New-Object System.Drawing.Size(350, 40)
@@ -627,23 +654,93 @@ $btnOptimizePerformance.ForeColor = [System.Drawing.Color]::White
 $btnOptimizePerformance.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnOptimizePerformance.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
 $btnOptimizePerformance.Cursor = [System.Windows.Forms.Cursors]::Hand
-$btnOptimizePerformance.Add_Click({
-    $result = Optimize-SystemPerformance
-    if ($result) {
-        $statusLabel.Text = "✅ System performance optimized"
+
+$visualFxComboBox = New-Object System.Windows.Forms.ComboBox
+$visualFxComboBox.Size = New-Object System.Drawing.Size(350, 30)
+$visualFxComboBox.Location = New-Object System.Drawing.Point(20, 90)
+$visualFxComboBox.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$visualFxComboBox.BackColor = [System.Drawing.Color]::FromArgb(45, 45, 48)
+$visualFxComboBox.ForeColor = [System.Drawing.Color]::White
+$visualFxComboBox.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$visualFxComboBox.Items.AddRange(@("Let Windows choose", "Adjust for best appearance", "Adjust for best performance", "Custom"))
+
+# Privacy Options
+$telemetryToggle = New-Object System.Windows.Forms.CheckBox
+$telemetryToggle.Text = "Disable Telemetry"
+$telemetryToggle.Size = New-Object System.Drawing.Size(350, 30)
+$telemetryToggle.Location = New-Object System.Drawing.Point(20, 30)
+$telemetryToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$telemetryToggle.ForeColor = [System.Drawing.Color]::White
+
+$diagnosticToggle = New-Object System.Windows.Forms.CheckBox
+$diagnosticToggle.Text = "Disable Diagnostic Data"
+$diagnosticToggle.Size = New-Object System.Drawing.Size(350, 30)
+$diagnosticToggle.Location = New-Object System.Drawing.Point(20, 70)
+$diagnosticToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$diagnosticToggle.ForeColor = [System.Drawing.Color]::White
+
+$locationToggle = New-Object System.Windows.Forms.CheckBox
+$locationToggle.Text = "Disable Location Services"
+$locationToggle.Size = New-Object System.Drawing.Size(350, 30)
+$locationToggle.Location = New-Object System.Drawing.Point(20, 110)
+$locationToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$locationToggle.ForeColor = [System.Drawing.Color]::White
+
+# System Options
+$restorePointBtn = New-Object System.Windows.Forms.Button
+$restorePointBtn.Text = "Create Restore Point"
+$restorePointBtn.Size = New-Object System.Drawing.Size(350, 40)
+$restorePointBtn.Location = New-Object System.Drawing.Point(20, 30)
+$restorePointBtn.BackColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
+$restorePointBtn.ForeColor = [System.Drawing.Color]::White
+$restorePointBtn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$restorePointBtn.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$restorePointBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
+
+$powerPlanComboBox = New-Object System.Windows.Forms.ComboBox
+$powerPlanComboBox.Size = New-Object System.Drawing.Size(350, 30)
+$powerPlanComboBox.Location = New-Object System.Drawing.Point(20, 90)
+$powerPlanComboBox.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$powerPlanComboBox.BackColor = [System.Drawing.Color]::FromArgb(45, 45, 48)
+$powerPlanComboBox.ForeColor = [System.Drawing.Color]::White
+$powerPlanComboBox.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$powerPlanComboBox.Items.AddRange(@("Balanced", "Power Saver", "High Performance", "Ultimate Performance"))
+
+# Add event handlers
+$restorePointBtn.Add_Click({
+    try {
+        Enable-ComputerRestore -Drive "C:\"
+        Checkpoint-Computer -Description "FlixBooster Restore Point" -RestorePointType "MODIFY_SETTINGS"
+        $statusLabel.Text = "✅ Restore point created successfully"
         $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
-    } else {
-        $statusLabel.Text = "Failed to optimize performance"
+    } catch {
+        $statusLabel.Text = "Failed to create restore point"
         $statusLabel.ForeColor = [System.Drawing.Color]::Red
     }
 })
 
+$powerPlanComboBox.Add_SelectedIndexChanged({
+    $selected = $powerPlanComboBox.SelectedItem
+    switch ($selected) {
+        "Balanced" { powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e }
+        "Power Saver" { powercfg /setactive a1841308-3541-4fab-bc81-f71556f20b4a }
+        "High Performance" { powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c }
+        "Ultimate Performance" { 
+            powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
+            Start-Sleep -Seconds 1
+            powercfg /setactive e9a42b02-d5df-448d-aa00-03f14749eb61
+        }
+    }
+})
+
 # Add controls to groups
-$grpAppearance.Controls.Add($darkModeToggle)
-$grpPerformance.Controls.Add($btnOptimizePerformance)
+$grpAppearance.Controls.AddRange(@($darkModeToggle, $transparencyToggle, $showFileExtToggle))
+$grpPerformance.Controls.AddRange(@($btnOptimizePerformance, $visualFxComboBox))
+$grpPrivacy.Controls.AddRange(@($telemetryToggle, $diagnosticToggle, $locationToggle))
+$grpSystem.Controls.AddRange(@($restorePointBtn, $powerPlanComboBox))
 
 # Add groups to Customize tab
-$tabCustomize.Controls.AddRange(@($grpAppearance, $grpPerformance))
+$tabCustomize.Controls.AddRange(@($grpAppearance, $grpPerformance, $grpPrivacy, $grpSystem))
 
 # Add Customize tab to tab control
 $tabControl.Controls.Add($tabCustomize)
