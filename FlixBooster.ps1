@@ -45,6 +45,29 @@ function Optimize-SystemPerformance {
     }
 }
 
+# Function to check if an app is installed
+function Test-AppInstalled {
+    param (
+        [string]$AppName
+    )
+    $app = Get-AppxPackage -Name $AppName -ErrorAction SilentlyContinue
+    return $null -ne $app
+}
+
+# Add this function near the other functions
+function Test-CriticalApp {
+    param (
+        [string]$AppName
+    )
+    $criticalApps = @(
+        "Microsoft.WindowsCalculator",
+        "Microsoft.WindowsStore",
+        "Microsoft.WindowsNotepad",
+        "Microsoft.Windows.Photos"
+    )
+    return $criticalApps -contains $AppName
+}
+
 # Create loading screen with animation
 $script:loadingComplete = $false
 $loadingForm = New-Object System.Windows.Forms.Form
@@ -216,35 +239,97 @@ $checkListDebloat.BorderStyle = [System.Windows.Forms.BorderStyle]::None
 $checkListDebloat.Font = New-Object System.Drawing.Font("Segoe UI", 11)
 $checkListDebloat.ItemHeight = 30
 
-# List of bloatware apps
+# Enhanced bloatware apps list with descriptions
 $bloatwareApps = @(
-    "Microsoft.3DBuilder",
-    "Microsoft.BingNews",
-    "Microsoft.BingWeather",
-    "Microsoft.GetHelp",
-    "Microsoft.Getstarted",
-    "Microsoft.MicrosoftOfficeHub",
-    "Microsoft.MicrosoftSolitaireCollection",
-    "Microsoft.MixedReality.Portal",
-    "Microsoft.People",
-    "Microsoft.SkypeApp",
-    "Microsoft.WindowsAlarms",
-    "Microsoft.WindowsFeedbackHub",
-    "Microsoft.WindowsMaps",
-    "Microsoft.Xbox.TCUI",
-    "Microsoft.XboxApp",
-    "Microsoft.XboxGameOverlay",
-    "Microsoft.XboxGamingOverlay",
-    "Microsoft.XboxIdentityProvider",
-    "Microsoft.XboxSpeechToTextOverlay",
-    "Microsoft.YourPhone",
-    "Microsoft.ZuneMusic",
-    "Microsoft.ZuneVideo"
+    @{Name="Microsoft.3DBuilder"; Description="3D Builder"},
+    @{Name="Microsoft.549981C3F5F10"; Description="Cortana"},
+    @{Name="Microsoft.BingNews"; Description="News"},
+    @{Name="Microsoft.BingWeather"; Description="Weather"},
+    @{Name="Microsoft.GetHelp"; Description="Get Help"},
+    @{Name="Microsoft.Getstarted"; Description="Tips"},
+    @{Name="Microsoft.MicrosoftOfficeHub"; Description="Office"},
+    @{Name="Microsoft.MicrosoftSolitaireCollection"; Description="Solitaire"},
+    @{Name="Microsoft.MixedReality.Portal"; Description="Mixed Reality Portal"},
+    @{Name="Microsoft.People"; Description="People"},
+    @{Name="Microsoft.SkypeApp"; Description="Skype"},
+    @{Name="Microsoft.Wallet"; Description="Wallet"},
+    @{Name="Microsoft.WindowsAlarms"; Description="Alarms"},
+    @{Name="Microsoft.WindowsCamera"; Description="Camera"},
+    @{Name="Microsoft.WindowsFeedbackHub"; Description="Feedback Hub"},
+    @{Name="Microsoft.WindowsMaps"; Description="Maps"},
+    @{Name="Microsoft.WindowsSoundRecorder"; Description="Voice Recorder"},
+    @{Name="Microsoft.Xbox.TCUI"; Description="Xbox TCUI"},
+    @{Name="Microsoft.XboxApp"; Description="Xbox"},
+    @{Name="Microsoft.XboxGameOverlay"; Description="Xbox Game Overlay"},
+    @{Name="Microsoft.XboxGamingOverlay"; Description="Xbox Gaming Overlay"},
+    @{Name="Microsoft.XboxIdentityProvider"; Description="Xbox Identity"},
+    @{Name="Microsoft.XboxSpeechToTextOverlay"; Description="Xbox Speech Overlay"},
+    @{Name="Microsoft.YourPhone"; Description="Your Phone"},
+    @{Name="Microsoft.ZuneMusic"; Description="Groove Music"},
+    @{Name="Microsoft.ZuneVideo"; Description="Movies & TV"},
+    # Adding new bloatware apps
+    @{Name="Microsoft.ScreenSketch"; Description="Snipping Tool"},
+    @{Name="Microsoft.Windows.Photos"; Description="Photos"},
+    @{Name="Microsoft.WindowsCalculator"; Description="Calculator"},
+    @{Name="Microsoft.WindowsNotepad"; Description="Notepad"},
+    @{Name="Microsoft.WindowsCamera"; Description="Camera"},
+    @{Name="Microsoft.ZuneVideo"; Description="Media Player"},
+    @{Name="Microsoft.MicrosoftEdge.Stable"; Description="Microsoft Edge"},
+    @{Name="Microsoft.MicrosoftStickyNotes"; Description="Sticky Notes"},
+    @{Name="Microsoft.WindowsMaps"; Description="Maps"},
+    @{Name="Microsoft.WindowsStore"; Description="Microsoft Store"},
+    @{Name="Microsoft.WindowsTerminal"; Description="Windows Terminal"},
+    @{Name="Microsoft.PowerAutomateDesktop"; Description="Power Automate"},
+    @{Name="Microsoft.BingTranslator"; Description="Translator"},
+    @{Name="Microsoft.MicrosoftTeams"; Description="Microsoft Teams"},
+    @{Name="Microsoft.Paint"; Description="Paint"},
+    @{Name="Microsoft.WindowsNotepad"; Description="Notepad"},
+    @{Name="Microsoft.WindowsSoundRecorder"; Description="Voice Recorder"},
+    @{Name="Microsoft.BingWeather"; Description="Weather"},
+    @{Name="Microsoft.WindowsTerminalPreview"; Description="Terminal Preview"},
+    @{Name="Microsoft.WindowsAlarms"; Description="Alarms & Clock"}
 )
 
 foreach ($app in $bloatwareApps) {
     $checkListDebloat.Items.Add($app, $false)
 }
+
+# Modify the CheckedListBox to show installation status
+$checkListDebloat.DrawMode = [System.Windows.Forms.DrawMode]::OwnerDrawFixed
+$checkListDebloat.Add_DrawItem({
+    param($sender, $e)
+    
+    if ($e.Index -lt 0) { return }
+    
+    $app = $bloatwareApps[$e.Index]
+    $isInstalled = Test-AppInstalled -AppName $app.Name
+    
+    # Draw background
+    $e.DrawBackground()
+    
+    # Draw status circle
+    $circleRect = New-Object System.Drawing.Rectangle($e.Bounds.X + 5, $e.Bounds.Y + 5, 20, 20)
+    $circleBrush = New-Object System.Drawing.SolidBrush($(if ($isInstalled) { 
+        [System.Drawing.Color]::FromArgb(46, 204, 113) 
+    } else { 
+        [System.Drawing.Color]::FromArgb(231, 76, 60) 
+    }))
+    $e.Graphics.FillEllipse($circleBrush, $circleRect)
+    
+    # Draw text
+    $textBrush = New-Object System.Drawing.SolidBrush($sender.ForeColor)
+    $textPoint = New-Object System.Drawing.Point($e.Bounds.X + 30, $e.Bounds.Y + 5)
+    $e.Graphics.DrawString($app.Description, $e.Font, $textBrush, $textPoint)
+    
+    # Draw checkbox
+    if ($sender.GetItemChecked($e.Index)) {
+        $checkBoxRect = New-Object System.Drawing.Rectangle($e.Bounds.Right - 25, $e.Bounds.Y + 5, 20, 20)
+        $e.Graphics.DrawImage([System.Windows.Forms.CheckBoxRenderer]::CheckedNormal, $checkBoxRect)
+    }
+    
+    $circleBrush.Dispose()
+    $textBrush.Dispose()
+})
 
 # Tweaks tab
 $tabTweaks = New-Object System.Windows.Forms.TabPage
@@ -262,29 +347,43 @@ $checkListTweaks.BorderStyle = [System.Windows.Forms.BorderStyle]::None
 $checkListTweaks.Font = New-Object System.Drawing.Font("Segoe UI", 10)
 $checkListTweaks.ItemHeight = 25
 
-# List of tweaks
+# Enhanced tweaks list with actual implementations
 $tweaks = @(
-    "Disable Telemetry",
-    "Disable Wi-Fi Sense",
-    "Disable SmartScreen Filter",
-    "Disable Web Search in Start Menu",
-    "Disable Application suggestions",
-    "Disable Activity History",
-    "Disable Location Tracking",
-    "Disable Automatic Maps updates",
-    "Disable Feedback",
-    "Disable Tailored Experiences",
-    "Disable Advertising ID",
-    "Disable Cortana",
-    "Disable GameDVR",
-    "Set Services to Manual",
-    "Disable Fast Boot",
-    "Show File Extensions",
-    "Show Hidden Files"
+    @{
+        Name = "Disable Telemetry"
+        Action = {
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" -Name "AllowTelemetry" -Type DWord -Value 0
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -Type DWord -Value 0
+            Disable-ScheduledTask -TaskName "Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" | Out-Null
+        }
+    },
+    @{
+        Name = "Disable Wi-Fi Sense"
+        Action = {
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting" -Name "Value" -Type DWord -Value 0
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots" -Name "Value" -Type DWord -Value 0
+        }
+    },
+    @{
+        Name = "Optimize Gaming Performance"
+        Action = {
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Type DWord -Value 0
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Priority" -Type DWord -Value 6
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "GPU Priority" -Type DWord -Value 8
+        }
+    },
+    @{
+        Name = "Disable Superfetch"
+        Action = {
+            Stop-Service "SysMain" -Force
+            Set-Service "SysMain" -StartupType Disabled
+        }
+    }
+    # Add more tweaks here...
 )
 
 foreach ($tweak in $tweaks) {
-    $checkListTweaks.Items.Add($tweak, $false)
+    $checkListTweaks.Items.Add($tweak.Name, $false)
 }
 
 # Create buttons for Debloat tab
@@ -357,6 +456,22 @@ $btnSelectAllTweaks.Cursor = [System.Windows.Forms.Cursors]::Hand
 
 # Add button click events
 $btnRemoveSelected.Add_Click({
+    $criticalApps = $checkListDebloat.CheckedItems | Where-Object { Test-CriticalApp $_.Name }
+    if ($criticalApps) {
+        $warningMessage = "Warning: You are about to remove some critical system apps:`n`n"
+        $warningMessage += ($criticalApps.Description -join "`n")
+        $warningMessage += "`n`nThis might affect system functionality. Do you want to continue?"
+        $result = [System.Windows.Forms.MessageBox]::Show(
+            $warningMessage,
+            "Warning",
+            [System.Windows.Forms.MessageBoxButtons]::YesNo,
+            [System.Windows.Forms.MessageBoxIcon]::Warning
+        )
+        if ($result -eq [System.Windows.Forms.DialogResult]::No) {
+            return
+        }
+    }
+    
     $statusLabel.Text = 'Processing...'
     $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
     $form.Refresh()
@@ -408,34 +523,20 @@ $btnApplyTweaks.Add_Click({
     foreach ($tweak in $selectedTweaks) {
         try {
             $current++
-            $statusLabel.Text = ('Applying {0}... ({1} of {2})' -f $tweak, $current, $total)
+            $statusLabel.Text = "Applying $tweak... ($current of $total)"
             $form.Refresh()
             
-            switch ($tweak) {
-                'Disable Telemetry' {
-                    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection' -Name 'AllowTelemetry' -Type DWord -Value 0
-                }
-                'Enable Ultimate Performance Power Plan' {
-                    powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
-                }
-                'Optimize Network Settings' {
-                    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters' -Name 'TCPNoDelay' -Type DWord -Value 1
-                    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters' -Name 'TCP1323Opts' -Type DWord -Value 1
-                }
-                'Disable Windows Search Indexing' {
-                    Stop-Service 'WSearch' -Force
-                    Set-Service 'WSearch' -StartupType Disabled
-                }
-                'Optimize SSD Settings' {
-                    fsutil behavior set DisableLastAccess 1
-                    fsutil behavior set EncryptPagingFile 0
-                }
+            $tweakObj = $tweaks | Where-Object { $_.Name -eq $tweak }
+            if ($tweakObj) {
+                & $tweakObj.Action
             }
+            
             Start-Sleep -Milliseconds 50
         }
         catch {
-            $statusLabel.Text = ('Failed to apply {0}' -f $tweak)
+            $statusLabel.Text = "Failed to apply $tweak"
             $statusLabel.ForeColor = [System.Drawing.Color]::Red
+            Write-Error $_.Exception.Message
         }
     }
     
@@ -531,26 +632,6 @@ $btnOptimizePerformance.Add_Click({
         $statusLabel.ForeColor = [System.Drawing.Color]::Red
     }
 })
-
-# Add more tweaks to the existing tweaks list
-$tweaks += @(
-    "Enable Ultimate Performance Power Plan",
-    "Optimize Network Settings",
-    "Disable Windows Search Indexing",
-    "Disable Superfetch",
-    "Optimize Visual Effects",
-    "Disable Windows Tips",
-    "Disable Background Apps",
-    "Disable Timeline",
-    "Optimize SSD Settings",
-    "Disable Hibernate",
-    "Optimize Gaming Mode",
-    "Disable Power Throttling",
-    "Clean System Files",
-    "Optimize Startup Programs",
-    "Disable Print Spooler",
-    "Optimize Memory Usage"
-)
 
 # Add controls to groups
 $grpAppearance.Controls.Add($darkModeToggle)
