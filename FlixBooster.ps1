@@ -295,7 +295,7 @@ $checkListDebloat.Add_DrawItem({
     
     if ($e.Index -lt 0) { return }
     
-    $item = $sender.Items[$e.Index]
+    $item = $bloatwareApps[$e.Index]  # Changed from $sender.Items[$e.Index]
     $isInstalled = Test-AppInstalled -AppName $item.Name
     
     # Draw background
@@ -319,12 +319,6 @@ $checkListDebloat.Add_DrawItem({
     $textPoint = New-Object System.Drawing.Point($e.Bounds.X + 35, $e.Bounds.Y + 5)
     $e.Graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::ClearTypeGridFit
     $e.Graphics.DrawString($item.Description, $e.Font, $textBrush, $textPoint)
-    
-    # Draw checkbox
-    if ($sender.GetItemChecked($e.Index)) {
-        $checkBoxRect = New-Object System.Drawing.Rectangle($e.Bounds.Right - 25, $e.Bounds.Y + 5, 20, 20)
-        $e.Graphics.DrawImage([System.Windows.Forms.CheckBoxRenderer]::CheckedNormal, $checkBoxRect)
-    }
     
     # Clean up
     $circleBrush.Dispose()
@@ -575,6 +569,110 @@ $tabTweaks.Controls.Add($btnSelectAllTweaks)
 $tabControl.Controls.Add($tabDebloat)
 $tabControl.Controls.Add($tabTweaks)
 
+# Create Customize tab
+$tabCustomize = New-Object System.Windows.Forms.TabPage
+$tabCustomize.Text = "Customize"
+$tabCustomize.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
+$tabCustomize.Padding = New-Object System.Windows.Forms.Padding(20)
+
+# Create Windows Personalization group
+$grpPersonalization = New-Object System.Windows.Forms.GroupBox
+$grpPersonalization.Text = "Windows Personalization"
+$grpPersonalization.Size = New-Object System.Drawing.Size(940, 300)
+$grpPersonalization.Location = New-Object System.Drawing.Point(10, 10)
+$grpPersonalization.ForeColor = [System.Drawing.Color]::White
+$grpPersonalization.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+$grpPersonalization.BackColor = [System.Drawing.Color]::FromArgb(40, 40, 45)
+$grpPersonalization.Padding = New-Object System.Windows.Forms.Padding(15)
+
+# Create customization options
+$darkModeToggle = New-Object System.Windows.Forms.CheckBox
+$darkModeToggle.Text = "Dark Mode"
+$darkModeToggle.Size = New-Object System.Drawing.Size(400, 30)
+$darkModeToggle.Location = New-Object System.Drawing.Point(20, 40)
+$darkModeToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$darkModeToggle.ForeColor = [System.Drawing.Color]::White
+
+$showFileExtToggle = New-Object System.Windows.Forms.CheckBox
+$showFileExtToggle.Text = "Show File Extensions"
+$showFileExtToggle.Size = New-Object System.Drawing.Size(400, 30)
+$showFileExtToggle.Location = New-Object System.Drawing.Point(20, 80)
+$showFileExtToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$showFileExtToggle.ForeColor = [System.Drawing.Color]::White
+
+$showHiddenFilesToggle = New-Object System.Windows.Forms.CheckBox
+$showHiddenFilesToggle.Text = "Show Hidden Files"
+$showHiddenFilesToggle.Size = New-Object System.Drawing.Size(400, 30)
+$showHiddenFilesToggle.Location = New-Object System.Drawing.Point(20, 120)
+$showHiddenFilesToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$showHiddenFilesToggle.ForeColor = [System.Drawing.Color]::White
+
+$smallTaskbarToggle = New-Object System.Windows.Forms.CheckBox
+$smallTaskbarToggle.Text = "Small Taskbar Icons"
+$smallTaskbarToggle.Size = New-Object System.Drawing.Size(400, 30)
+$smallTaskbarToggle.Location = New-Object System.Drawing.Point(20, 160)
+$smallTaskbarToggle.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$smallTaskbarToggle.ForeColor = [System.Drawing.Color]::White
+
+# Add event handlers for customization options
+$darkModeToggle.Add_Click({
+    $result = Set-DarkMode -Enable $this.Checked
+    if ($result) {
+        $statusLabel.Text = "Dark mode " + $(if ($this.Checked) { "enabled" } else { "disabled" })
+        $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
+    } else {
+        $statusLabel.Text = "Failed to change dark mode setting"
+        $statusLabel.ForeColor = [System.Drawing.Color]::Red
+    }
+})
+
+$showFileExtToggle.Add_Click({
+    try {
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "HideFileExt" -Value $([int](!$this.Checked))
+        $statusLabel.Text = "File extensions " + $(if ($this.Checked) { "shown" } else { "hidden" })
+        $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
+    } catch {
+        $statusLabel.Text = "Failed to change file extensions setting"
+        $statusLabel.ForeColor = [System.Drawing.Color]::Red
+    }
+})
+
+$showHiddenFilesToggle.Add_Click({
+    try {
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "Hidden" -Value $([int]($this.Checked))
+        $statusLabel.Text = "Hidden files " + $(if ($this.Checked) { "shown" } else { "hidden" })
+        $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
+    } catch {
+        $statusLabel.Text = "Failed to change hidden files setting"
+        $statusLabel.ForeColor = [System.Drawing.Color]::Red
+    }
+})
+
+$smallTaskbarToggle.Add_Click({
+    try {
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarSmallIcons" -Value $([int]($this.Checked))
+        $statusLabel.Text = "Taskbar icons " + $(if ($this.Checked) { "small" } else { "normal" })
+        $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
+    } catch {
+        $statusLabel.Text = "Failed to change taskbar icon size"
+        $statusLabel.ForeColor = [System.Drawing.Color]::Red
+    }
+})
+
+# Add controls to groups
+$grpPersonalization.Controls.AddRange(@(
+    $darkModeToggle,
+    $showFileExtToggle,
+    $showHiddenFilesToggle,
+    $smallTaskbarToggle
+))
+
+# Add groups to Customize tab
+$tabCustomize.Controls.Add($grpPersonalization)
+
+# Add Customize tab to tab control
+$tabControl.Controls.Add($tabCustomize)
+
 # Create Performance tab
 $tabPerformance = New-Object System.Windows.Forms.TabPage
 $tabPerformance.Text = "Performance"
@@ -655,22 +753,27 @@ $restorePointBtn.Add_Click({
 })
 
 $powerSlider.Add_ValueChanged({
-    $plans = @(
-        "a1841308-3541-4fab-bc81-f71556f20b4a",  # Power Saver
-        "381b4222-f694-41f0-9685-ff5bb260df2e",  # Balanced
-        "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",  # High Performance
-        "e9a42b02-d5df-448d-aa00-03f14749eb61"   # Ultimate Performance
-    )
-    
-    if ($this.Value -eq 3) {
-        # Create Ultimate Performance plan if it doesn't exist
-        powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
-        Start-Sleep -Seconds 1
+    try {
+        $plans = @(
+            "a1841308-3541-4fab-bc81-f71556f20b4a",  # Power Saver
+            "381b4222-f694-41f0-9685-ff5bb260df2e",  # Balanced
+            "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",  # High Performance
+            "e9a42b02-d5df-448d-aa00-03f14749eb61"   # Ultimate Performance
+        )
+        
+        if ($this.Value -eq 3) {
+            # Create Ultimate Performance plan if it doesn't exist
+            powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null
+            Start-Sleep -Milliseconds 500
+        }
+        
+        powercfg /setactive $plans[$this.Value] 2>$null
+        $statusLabel.Text = "Power plan changed to " + $powerLabels[$this.Value].Text
+        $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
+    } catch {
+        $statusLabel.Text = "Failed to change power plan"
+        $statusLabel.ForeColor = [System.Drawing.Color]::Red
     }
-    
-    powercfg /setactive $plans[$this.Value]
-    $statusLabel.Text = "Power plan changed to " + $powerLabels[$this.Value].Text
-    $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
 })
 
 # Add controls to groups
