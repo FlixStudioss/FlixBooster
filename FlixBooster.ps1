@@ -184,43 +184,48 @@ $tabControl.Add_DrawItem({
     $tabPage = $sender.TabPages[$e.Index]
     $tabBounds = $sender.GetTabRect($e.Index)
     
-    # Fill background with gradient
+    # Create gradient background
+    $gradientBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+        $tabBounds,
+        [System.Drawing.Color]::FromArgb(45, 45, 50),
+        [System.Drawing.Color]::FromArgb(35, 35, 40),
+        [System.Drawing.Drawing2D.LinearGradientMode]::Vertical
+    )
+    
     if ($e.Index -eq $sender.SelectedIndex) {
+        # Selected tab styling
         $gradientBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
             $tabBounds,
-            [System.Drawing.Color]::FromArgb(55, 55, 60),
-            [System.Drawing.Color]::FromArgb(45, 45, 50),
-            [System.Drawing.Drawing2D.LinearGradientMode]::Vertical)
-    } else {
-        $gradientBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
-            $tabBounds,
-            [System.Drawing.Color]::FromArgb(45, 45, 48),
-            [System.Drawing.Color]::FromArgb(35, 35, 40),
-            [System.Drawing.Drawing2D.LinearGradientMode]::Vertical)
+            [System.Drawing.Color]::FromArgb(0, 122, 204),
+            [System.Drawing.Color]::FromArgb(0, 102, 184),
+            [System.Drawing.Drawing2D.LinearGradientMode]::Vertical
+        )
     }
+    
     $e.Graphics.FillRectangle($gradientBrush, $tabBounds)
     
-    # Add subtle border
+    # Draw text with shadow
+    $textBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(200, 200, 200))
     if ($e.Index -eq $sender.SelectedIndex) {
-        $borderPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(0, 122, 204), 2)
-        $e.Graphics.DrawLine($borderPen, $tabBounds.Left, $tabBounds.Bottom, $tabBounds.Right, $tabBounds.Bottom)
-        $borderPen.Dispose()
+        $textBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
     }
     
-    # Calculate text position for center alignment
-    $textSize = $e.Graphics.MeasureString($tabPage.Text, $sender.Font)
-    $textX = $tabBounds.Left + ($tabBounds.Width - $textSize.Width) / 2
-    $textY = $tabBounds.Top + ($tabBounds.Height - $textSize.Height) / 2
-    $textPoint = New-Object System.Drawing.PointF($textX, $textY)
+    $stringFormat = New-Object System.Drawing.StringFormat
+    $stringFormat.Alignment = [System.Drawing.StringAlignment]::Center
+    $stringFormat.LineAlignment = [System.Drawing.StringAlignment]::Center
     
-    # Draw text with anti-aliasing
     $e.Graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::ClearTypeGridFit
-    $textBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
-    $e.Graphics.DrawString($tabPage.Text, $sender.Font, $textBrush, $textPoint)
+    $e.Graphics.DrawString(
+        $tabPage.Text,
+        (New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)),
+        $textBrush,
+        $tabBounds,
+        $stringFormat
+    )
     
-    # Clean up
     $gradientBrush.Dispose()
     $textBrush.Dispose()
+    $stringFormat.Dispose()
 })
 
 # Debloat tab with enhanced styling
@@ -239,44 +244,55 @@ $checkListDebloat.BorderStyle = [System.Windows.Forms.BorderStyle]::None
 $checkListDebloat.Font = New-Object System.Drawing.Font("Segoe UI", 11)
 $checkListDebloat.ItemHeight = 30
 
-# Modified bloatware apps list
+# Modified bloatware apps list with better names
 $bloatwareApps = @(
     @{Name="Microsoft.3DBuilder"; Description="3D Builder"},
-    @{Name="Microsoft.549981C3F5F10"; Description="Cortana Assistant"},
-    @{Name="Microsoft.BingNews"; Description="Microsoft News"},
-    @{Name="Microsoft.BingWeather"; Description="Microsoft Weather"},
-    @{Name="Microsoft.GetHelp"; Description="Microsoft Help"},
-    @{Name="Microsoft.Getstarted"; Description="Microsoft Tips"},
-    @{Name="Microsoft.MicrosoftOfficeHub"; Description="Microsoft Office"},
-    @{Name="Microsoft.MicrosoftSolitaireCollection"; Description="Microsoft Solitaire"},
-    @{Name="Microsoft.MixedReality.Portal"; Description="Mixed Reality Portal"},
-    @{Name="Microsoft.People"; Description="Microsoft People"},
+    @{Name="Microsoft.549981C3F5F10"; Description="Cortana"},
+    @{Name="Microsoft.BingNews"; Description="News"},
+    @{Name="Microsoft.BingWeather"; Description="Weather"},
+    @{Name="Microsoft.GetHelp"; Description="Get Help"},
+    @{Name="Microsoft.Getstarted"; Description="Tips"},
+    @{Name="Microsoft.MicrosoftOfficeHub"; Description="Office"},
+    @{Name="Microsoft.MicrosoftSolitaireCollection"; Description="Solitaire"},
+    @{Name="Microsoft.MixedReality.Portal"; Description="Mixed Reality"},
+    @{Name="Microsoft.People"; Description="People"},
     @{Name="Microsoft.SkypeApp"; Description="Skype"},
-    @{Name="Microsoft.WindowsAlarms"; Description="Windows Alarms"},
-    @{Name="Microsoft.WindowsCamera"; Description="Windows Camera"},
-    @{Name="Microsoft.WindowsFeedbackHub"; Description="Feedback Hub"},
-    @{Name="Microsoft.WindowsMaps"; Description="Windows Maps"},
+    @{Name="Microsoft.Wallet"; Description="Wallet"},
+    @{Name="Microsoft.WindowsAlarms"; Description="Alarms"},
+    @{Name="Microsoft.WindowsCamera"; Description="Camera"},
+    @{Name="Microsoft.WindowsFeedbackHub"; Description="Feedback"},
+    @{Name="Microsoft.WindowsMaps"; Description="Maps"},
     @{Name="Microsoft.WindowsSoundRecorder"; Description="Voice Recorder"},
-    @{Name="Microsoft.Xbox.TCUI"; Description="Xbox TCUI"},
-    @{Name="Microsoft.XboxApp"; Description="Xbox App"},
-    @{Name="Microsoft.XboxGameOverlay"; Description="Xbox Game Overlay"},
-    @{Name="Microsoft.XboxGamingOverlay"; Description="Xbox Gaming Bar"},
+    @{Name="Microsoft.Xbox.TCUI"; Description="Xbox Live"},
+    @{Name="Microsoft.XboxApp"; Description="Xbox"},
+    @{Name="Microsoft.XboxGameOverlay"; Description="Xbox Overlay"},
+    @{Name="Microsoft.XboxGamingOverlay"; Description="Xbox Gaming"},
     @{Name="Microsoft.XboxIdentityProvider"; Description="Xbox Identity"},
+    @{Name="Microsoft.XboxSpeechToTextOverlay"; Description="Xbox Speech"},
     @{Name="Microsoft.YourPhone"; Description="Phone Link"},
-    @{Name="Microsoft.ZuneMusic"; Description="Windows Media Player"},
+    @{Name="Microsoft.ZuneMusic"; Description="Media Player"},
+    @{Name="Microsoft.ZuneVideo"; Description="Movies & TV"},
     @{Name="Microsoft.ScreenSketch"; Description="Snipping Tool"},
     @{Name="Microsoft.Windows.Photos"; Description="Photos"},
     @{Name="Microsoft.WindowsCalculator"; Description="Calculator"},
     @{Name="Microsoft.WindowsNotepad"; Description="Notepad"},
-    @{Name="Microsoft.MicrosoftEdge.Stable"; Description="Microsoft Edge"},
+    @{Name="Microsoft.MicrosoftEdge.Stable"; Description="Edge"},
     @{Name="Microsoft.MicrosoftStickyNotes"; Description="Sticky Notes"},
-    @{Name="Microsoft.WindowsStore"; Description="Microsoft Store"},
-    @{Name="Microsoft.WindowsTerminal"; Description="Windows Terminal"},
+    @{Name="Microsoft.WindowsStore"; Description="Store"},
+    @{Name="Microsoft.WindowsTerminal"; Description="Terminal"},
     @{Name="Microsoft.PowerAutomateDesktop"; Description="Power Automate"},
-    @{Name="Microsoft.BingTranslator"; Description="Microsoft Translator"},
-    @{Name="Microsoft.MicrosoftTeams"; Description="Microsoft Teams"},
+    @{Name="Microsoft.BingTranslator"; Description="Translator"},
+    @{Name="Microsoft.MicrosoftTeams"; Description="Teams"},
     @{Name="Microsoft.Paint"; Description="Paint"},
-    @{Name="Microsoft.WindowsTerminalPreview"; Description="Terminal Preview"}
+    @{Name="Microsoft.OneDrive"; Description="OneDrive"},
+    @{Name="Microsoft.Office.OneNote"; Description="OneNote"},
+    @{Name="Microsoft.MSPaint"; Description="Paint 3D"},
+    @{Name="Microsoft.Microsoft3DViewer"; Description="3D Viewer"},
+    @{Name="Microsoft.MicrosoftFamily"; Description="Family"},
+    @{Name="Microsoft.WindowsCommunicationsApps"; Description="Mail & Calendar"},
+    @{Name="Microsoft.WindowsFeedbackHub"; Description="Feedback Hub"},
+    @{Name="Microsoft.WindowsMaps"; Description="Maps"},
+    @{Name="Microsoft.Messaging"; Description="Messaging"}
 )
 
 # Modify how we add items to the CheckedListBox
@@ -345,36 +361,320 @@ $checkListTweaks.ItemHeight = 25
 # Enhanced tweaks list with actual implementations
 $tweaks = @(
     @{
-        Name = "Disable Telemetry"
+        Name = "Disable Telemetry & Data Collection"
         Action = {
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" -Name "AllowTelemetry" -Type DWord -Value 0
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -Type DWord -Value 0
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" -Name "AllowTelemetry" -Value 0
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -Value 0
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Policies\DataCollection" -Name "AllowTelemetry" -Value 0
             Disable-ScheduledTask -TaskName "Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" | Out-Null
-        }
-    },
-    @{
-        Name = "Disable Wi-Fi Sense"
-        Action = {
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting" -Name "Value" -Type DWord -Value 0
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots" -Name "Value" -Type DWord -Value 0
+            Disable-ScheduledTask -TaskName "Microsoft\Windows\Application Experience\ProgramDataUpdater" | Out-Null
+            Disable-ScheduledTask -TaskName "Microsoft\Windows\Autochk\Proxy" | Out-Null
+            Disable-ScheduledTask -TaskName "Microsoft\Windows\Customer Experience Improvement Program\Consolidator" | Out-Null
+            Disable-ScheduledTask -TaskName "Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" | Out-Null
+            Disable-ScheduledTask -TaskName "Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" | Out-Null
         }
     },
     @{
         Name = "Optimize Gaming Performance"
         Action = {
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Type DWord -Value 0
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Priority" -Type DWord -Value 6
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "GPU Priority" -Type DWord -Value 8
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Value 0
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Value 4294967295
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Priority" -Value 6
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "GPU Priority" -Value 8
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Scheduling Category" -Value "High"
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Value 38
         }
     },
     @{
-        Name = "Disable Superfetch"
+        Name = "Disable Windows Search Indexing"
         Action = {
-            Stop-Service "SysMain" -Force
-            Set-Service "SysMain" -StartupType Disabled
+            Stop-Service "WSearch" -Force
+            Set-Service "WSearch" -StartupType Disabled
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\WSearch" -Name "Start" -Value 4
+        }
+    },
+    @{
+        Name = "Optimize Network Settings"
+        Action = {
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "TCPNoDelay" -Value 1
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "TCP1323Opts" -Value 1
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "GlobalMaxTcpWindowSize" -Value 65535
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "TcpWindowSize" -Value 65535
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Value 4294967295
+        }
+    },
+    @{
+        Name = "Disable Unnecessary Services"
+        Action = {
+            $services = @(
+                "DiagTrack",                # Connected User Experiences and Telemetry
+                "dmwappushservice",         # WAP Push Message Routing Service
+                "HomeGroupListener",        # HomeGroup Listener
+                "HomeGroupProvider",        # HomeGroup Provider
+                "lfsvc",                    # Geolocation Service
+                "MapsBroker",              # Downloaded Maps Manager
+                "NetTcpPortSharing",       # Net.Tcp Port Sharing Service
+                "RemoteAccess",            # Routing and Remote Access
+                "RemoteRegistry",          # Remote Registry
+                "SharedAccess",            # Internet Connection Sharing
+                "TrkWks",                  # Distributed Link Tracking Client
+                "WbioSrvc",               # Windows Biometric Service
+                "WMPNetworkSvc",          # Windows Media Player Network Sharing Service
+                "WSearch"                  # Windows Search
+            )
+            foreach ($service in $services) {
+                Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
+                Set-Service -Name $service -StartupType Disabled -ErrorAction SilentlyContinue
+            }
+        }
+    },
+    @{
+        Name = "Disable Windows Defender"
+        Action = {
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Value 1
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableRealtimeMonitoring" -Value 1
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableBehaviorMonitoring" -Value 1
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableOnAccessProtection" -Value 1
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableScanOnRealtimeEnable" -Value 1
+        }
+    },
+    @{
+        Name = "Disable Visual Effects"
+        Action = {
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Value 2
+            Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "UserPreferencesMask" -Value ([byte[]](0x90,0x12,0x03,0x80,0x10,0x00,0x00,0x00))
+            Set-ItemProperty -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Value 0
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ListviewAlphaSelect" -Value 0
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "EnableAeroPeek" -Value 0
+        }
+    },
+    @{
+        Name = "Optimize SSD Settings"
+        Action = {
+            fsutil behavior set DisableLastAccess 1
+            fsutil behavior set EncryptPagingFile 0
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "ClearPageFileAtShutdown" -Value 0
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "NtfsDisableLastAccessUpdate" -Value 1
+        }
+    },
+    @{
+        Name = "Disable Hibernation"
+        Action = {
+            powercfg -h off
+            Remove-Item -Path "C:\hiberfil.sys" -Force -ErrorAction SilentlyContinue
+        }
+    },
+    @{
+        Name = "Optimize Memory Usage"
+        Action = {
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "LargeSystemCache" -Value 1
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" -Name "IoPageLockLimit" -Value 983040
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Value 4294967295
+        }
+    },
+    @{
+        Name = "Optimize Boot Performance"
+        Action = {
+            # Disable Startup Delay
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize" -Name "StartupDelayInMSec" -Value 0
+            # Disable Prefetch and Superfetch
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" -Name "EnablePrefetcher" -Value 0
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" -Name "EnableSuperfetch" -Value 0
+            # Disable Fast Startup
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name "HiberbootEnabled" -Value 0
+        }
+    },
+    @{
+        Name = "Enhance Privacy Settings"
+        Action = {
+            # Disable Activity History
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Value 0
+            # Disable Timeline
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Value 0
+            # Disable Location Services
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Name "Value" -Value "Deny"
+            # Disable Advertising ID
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" -Name "Enabled" -Value 0
+        }
+    },
+    @{
+        Name = "Optimize Gaming Settings"
+        Action = {
+            # Enable Game Mode
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AllowAutoGameMode" -Value 1
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Value 1
+            # Disable Game DVR
+            Set-ItemProperty -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Value 0
+            # Optimize GPU for Performance
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "GPU Priority" -Value 8
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Priority" -Value 6
+        }
+    },
+    @{
+        Name = "Optimize Internet Settings"
+        Action = {
+            # Enable DNS Cache
+            Set-Service -Name Dnscache -StartupType Automatic
+            Start-Service -Name Dnscache
+            # Optimize Network Settings
+            netsh int tcp set global autotuninglevel=normal
+            netsh int tcp set global chimney=enabled
+            netsh int tcp set global dca=enabled
+            netsh int tcp set global netdma=enabled
+            # Set Static DNS
+            Set-DnsClientServerAddress -InterfaceIndex (Get-NetAdapter | Where-Object {$_.Status -eq "Up"}).InterfaceIndex -ServerAddresses "8.8.8.8","1.1.1.1"
+        }
+    },
+    @{
+        Name = "Clean System Files"
+        Action = {
+            # Clear Temp Files
+            Remove-Item -Path "C:\Windows\Temp\*" -Force -Recurse -ErrorAction SilentlyContinue
+            Remove-Item -Path "$env:TEMP\*" -Force -Recurse -ErrorAction SilentlyContinue
+            # Clear Windows Update Cache
+            Stop-Service -Name wuauserv
+            Remove-Item -Path "C:\Windows\SoftwareDistribution\*" -Force -Recurse -ErrorAction SilentlyContinue
+            Start-Service -Name wuauserv
+            # Clear Font Cache
+            Stop-Service -Name FontCache
+            Remove-Item -Path "$env:SystemDrive\Windows\ServiceProfiles\LocalService\AppData\Local\FontCache\*" -Force -ErrorAction SilentlyContinue
+            Start-Service -Name FontCache
+        }
+    },
+    @{
+        Name = "Optimize Windows Explorer"
+        Action = {
+            # Show file extensions and hidden files
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "HideFileExt" -Value 0
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "Hidden" -Value 1
+            # Disable Quick Access
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "ShowFrequent" -Value 0
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "ShowRecent" -Value 0
+            # Show This PC by default
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "LaunchTo" -Value 1
+        }
+    },
+    @{
+        Name = "Disable Windows Auto Updates"
+        Action = {
+            # Disable Windows Update Service
+            Stop-Service "wuauserv" -Force
+            Set-Service "wuauserv" -StartupType Disabled
+            # Disable Windows Update Registry Keys
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 1
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "AUOptions" -Value 2
+        }
+    },
+    @{
+        Name = "Enhance System Security"
+        Action = {
+            # Disable Remote Assistance
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance" -Name "fAllowToGetHelp" -Value 0
+            # Enable Windows Firewall
+            Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
+            # Disable Remote Desktop
+            Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 1
+        }
+    },
+    @{
+        Name = "Optimize CPU Performance"
+        Action = {
+            # Set CPU Priority to Programs
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Value 4294967295
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Value 0
+            # Optimize Processor Scheduling
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Value 38
+        }
+    },
+    @{
+        Name = "Enhance Privacy & Telemetry"
+        Action = {
+            # Disable Feedback Experience
+            Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Siuf\Rules" -Name "NumberOfSIUFInPeriod" -Value 0
+            # Disable Tailored Experiences
+            Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" -Name "TailoredExperiencesWithDiagnosticDataEnabled" -Value 0
+            # Disable App Launch Tracking
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "Start_TrackProgs" -Value 0
+        }
+    },
+    @{
+        Name = "Optimize Startup Programs"
+        Action = {
+            # Disable Common Startup Programs
+            $startupItems = @(
+                "OneDrive",
+                "Teams",
+                "Skype",
+                "Spotify",
+                "Steam",
+                "Discord"
+            )
+            foreach ($item in $startupItems) {
+                $regPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+                Remove-ItemProperty -Path $regPath -Name $item -ErrorAction SilentlyContinue
+            }
+        }
+    },
+    @{
+        Name = "Optimize Mouse & Keyboard"
+        Action = {
+            # Enhance Mouse Precision
+            Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseSpeed" -Value "1"
+            Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseThreshold1" -Value "6"
+            Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseThreshold2" -Value "10"
+            # Keyboard Response
+            Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardDelay" -Value "0"
+            Set-ItemProperty -Path "HKCU:\Control Panel\Keyboard" -Name "KeyboardSpeed" -Value "31"
+        }
+    },
+    @{
+        Name = "Optimize Drive Performance"
+        Action = {
+            # Disable Drive Indexing
+            $drives = Get-WmiObject Win32_Volume -Filter "DriveType=3"
+            foreach ($drive in $drives) {
+                $obj = $drive.GetPropertyValue("IndexingEnabled")
+                if ($obj) {
+                    $drive.IndexingEnabled = $false
+                    $drive.Put()
+                }
+            }
+            # Enable TRIM for SSDs
+            fsutil behavior set DisableDeleteNotify 0
+            # Optimize Drive Performance
+            Get-Volume | Optimize-Volume -ReTrim -Verbose
+        }
+    },
+    @{
+        Name = "Optimize Context Menu"
+        Action = {
+            # Remove Common Context Menu Items
+            $contextItems = @(
+                "Print",
+                "Cast to Device",
+                "Share",
+                "Edit with Paint 3D",
+                "Edit with Photos"
+            )
+            foreach ($item in $contextItems) {
+                Remove-Item -Path "HKCR:\*\shell\$item" -Recurse -ErrorAction SilentlyContinue
+            }
+        }
+    },
+    @{
+        Name = "Optimize DNS Settings"
+        Action = {
+            # Set CloudFlare and Google DNS
+            $adapters = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
+            foreach ($adapter in $adapters) {
+                Set-DnsClientServerAddress -InterfaceIndex $adapter.InterfaceIndex -ServerAddresses "1.1.1.1","8.8.8.8"
+            }
+            # Flush DNS Cache
+            ipconfig /flushdns
+            # Register DNS
+            ipconfig /registerdns
         }
     }
-    # Add more tweaks here...
 )
 
 foreach ($tweak in $tweaks) {
@@ -673,7 +973,7 @@ $tabCustomize.Controls.Add($grpPersonalization)
 # Add Customize tab to tab control
 $tabControl.Controls.Add($tabCustomize)
 
-# Create Performance tab
+# Create Performance tab with modern styling
 $tabPerformance = New-Object System.Windows.Forms.TabPage
 $tabPerformance.Text = "Performance"
 $tabPerformance.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
@@ -682,65 +982,86 @@ $tabPerformance.Padding = New-Object System.Windows.Forms.Padding(20)
 # Create restore point group
 $grpRestore = New-Object System.Windows.Forms.GroupBox
 $grpRestore.Text = "System Protection"
-$grpRestore.Size = New-Object System.Drawing.Size(940, 100)
+$grpRestore.Size = New-Object System.Drawing.Size(940, 150)
 $grpRestore.Location = New-Object System.Drawing.Point(10, 10)
 $grpRestore.ForeColor = [System.Drawing.Color]::White
 $grpRestore.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $grpRestore.BackColor = [System.Drawing.Color]::FromArgb(40, 40, 45)
-$grpRestore.Padding = New-Object System.Windows.Forms.Padding(15)
 
-# Create power plan group
+# Create restore point buttons
+$createRestoreBtn = New-Object System.Windows.Forms.Button
+$createRestoreBtn.Text = "Create Restore Point"
+$createRestoreBtn.Size = New-Object System.Drawing.Size(200, 40)
+$createRestoreBtn.Location = New-Object System.Drawing.Point(20, 35)
+$createRestoreBtn.BackColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
+$createRestoreBtn.ForeColor = [System.Drawing.Color]::White
+$createRestoreBtn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$createRestoreBtn.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+
+$removeRestoreBtn = New-Object System.Windows.Forms.Button
+$removeRestoreBtn.Text = "Remove Restore Points"
+$removeRestoreBtn.Size = New-Object System.Drawing.Size(200, 40)
+$removeRestoreBtn.Location = New-Object System.Drawing.Point(240, 35)
+$removeRestoreBtn.BackColor = [System.Drawing.Color]::FromArgb(220, 53, 69)
+$removeRestoreBtn.ForeColor = [System.Drawing.Color]::White
+$removeRestoreBtn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$removeRestoreBtn.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+
+# Create power settings group
 $grpPower = New-Object System.Windows.Forms.GroupBox
-$grpPower.Text = "Power Plan"
-$grpPower.Size = New-Object System.Drawing.Size(940, 200)
-$grpPower.Location = New-Object System.Drawing.Point(10, 120)
+$grpPower.Text = "Power Settings"
+$grpPower.Size = New-Object System.Drawing.Size(940, 250)
+$grpPower.Location = New-Object System.Drawing.Point(10, 170)
 $grpPower.ForeColor = [System.Drawing.Color]::White
 $grpPower.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $grpPower.BackColor = [System.Drawing.Color]::FromArgb(40, 40, 45)
-$grpPower.Padding = New-Object System.Windows.Forms.Padding(15)
 
-# Create restore point button with modern styling
-$restorePointBtn = New-Object System.Windows.Forms.Button
-$restorePointBtn.Text = "Create Restore Point"
-$restorePointBtn.Size = New-Object System.Drawing.Size(200, 40)
-$restorePointBtn.Location = New-Object System.Drawing.Point(20, 35)
-$restorePointBtn.BackColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
-$restorePointBtn.ForeColor = [System.Drawing.Color]::White
-$restorePointBtn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$restorePointBtn.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-$restorePointBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
+# Create power plan buttons instead of slider
+$btnPowerSaver = New-Object System.Windows.Forms.Button
+$btnBalanced = New-Object System.Windows.Forms.Button
+$btnPerformance = New-Object System.Windows.Forms.Button
+$btnUltimate = New-Object System.Windows.Forms.Button
 
-# Create power plan slider
-$powerSlider = New-Object System.Windows.Forms.TrackBar
-$powerSlider.Size = New-Object System.Drawing.Size(900, 45)
-$powerSlider.Location = New-Object System.Drawing.Point(20, 40)
-$powerSlider.Minimum = 0
-$powerSlider.Maximum = 3
-$powerSlider.Value = 1
-$powerSlider.BackColor = [System.Drawing.Color]::FromArgb(40, 40, 45)
-
-# Create power plan labels
-$powerLabels = @(
-    @{Text="Power Saver"; Color="DarkGreen"},
-    @{Text="Balanced"; Color="RoyalBlue"},
-    @{Text="Performance"; Color="DarkOrange"},
-    @{Text="Ultimate"; Color="Red"}
+$powerButtons = @(
+    @{ Button=$btnPowerSaver; Text="Power Saver"; Color=[System.Drawing.Color]::FromArgb(40, 167, 69); GUID="a1841308-3541-4fab-bc81-f71556f20b4a" },
+    @{ Button=$btnBalanced; Text="Balanced"; Color=[System.Drawing.Color]::FromArgb(0, 123, 255); GUID="381b4222-f694-41f0-9685-ff5bb260df2e" },
+    @{ Button=$btnPerformance; Text="Performance"; Color=[System.Drawing.Color]::FromArgb(255, 193, 7); GUID="8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c" },
+    @{ Button=$btnUltimate; Text="Ultimate Performance"; Color=[System.Drawing.Color]::FromArgb(220, 53, 69); GUID="e9a42b02-d5df-448d-aa00-03f14749eb61" }
 )
 
-$labelY = 90
-foreach ($i in 0..3) {
-    $powerLabel = New-Object System.Windows.Forms.Label
-    $powerLabel.Text = $powerLabels[$i].Text
-    $powerLabel.Size = New-Object System.Drawing.Size(220, 30)
-    $powerLabel.Location = New-Object System.Drawing.Point(20 + ($i * 225), $labelY)
-    $powerLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10)
-    $powerLabel.ForeColor = [System.Drawing.Color]::$($powerLabels[$i].Color)
-    $powerLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-    $grpPower.Controls.Add($powerLabel)
+$buttonX = 20
+foreach ($powerBtn in $powerButtons) {
+    $powerBtn.Button.Text = $powerBtn.Text
+    $powerBtn.Button.Size = New-Object System.Drawing.Size(220, 50)
+    $powerBtn.Button.Location = New-Object System.Drawing.Point($buttonX, 40)
+    $powerBtn.Button.BackColor = $powerBtn.Color
+    $powerBtn.Button.ForeColor = [System.Drawing.Color]::White
+    $powerBtn.Button.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $powerBtn.Button.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+    $powerBtn.Button.Cursor = [System.Windows.Forms.Cursors]::Hand
+    
+    $powerBtn.Button.Add_Click({
+        $btnData = $powerButtons | Where-Object { $_.Button -eq $this }
+        try {
+            if ($btnData.Text -eq "Ultimate Performance") {
+                powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null
+                Start-Sleep -Milliseconds 500
+            }
+            powercfg /setactive $btnData.GUID 2>$null
+            $statusLabel.Text = "Power plan changed to $($btnData.Text)"
+            $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
+        } catch {
+            $statusLabel.Text = "Failed to change power plan"
+            $statusLabel.ForeColor = [System.Drawing.Color]::Red
+        }
+    })
+    
+    $grpPower.Controls.Add($powerBtn.Button)
+    $buttonX += 230
 }
 
-# Add event handlers
-$restorePointBtn.Add_Click({
+# Add event handlers for restore points
+$createRestoreBtn.Add_Click({
     try {
         Enable-ComputerRestore -Drive "C:\"
         Checkpoint-Computer -Description "FlixBooster Restore Point" -RestorePointType "MODIFY_SETTINGS"
@@ -752,33 +1073,19 @@ $restorePointBtn.Add_Click({
     }
 })
 
-$powerSlider.Add_ValueChanged({
+$removeRestoreBtn.Add_Click({
     try {
-        $plans = @(
-            "a1841308-3541-4fab-bc81-f71556f20b4a",  # Power Saver
-            "381b4222-f694-41f0-9685-ff5bb260df2e",  # Balanced
-            "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",  # High Performance
-            "e9a42b02-d5df-448d-aa00-03f14749eb61"   # Ultimate Performance
-        )
-        
-        if ($this.Value -eq 3) {
-            # Create Ultimate Performance plan if it doesn't exist
-            powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null
-            Start-Sleep -Milliseconds 500
-        }
-        
-        powercfg /setactive $plans[$this.Value] 2>$null
-        $statusLabel.Text = "Power plan changed to " + $powerLabels[$this.Value].Text
+        vssadmin delete shadows /all /quiet
+        $statusLabel.Text = "✅ Restore points removed successfully"
         $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
     } catch {
-        $statusLabel.Text = "Failed to change power plan"
+        $statusLabel.Text = "Failed to remove restore points"
         $statusLabel.ForeColor = [System.Drawing.Color]::Red
     }
 })
 
 # Add controls to groups
-$grpRestore.Controls.Add($restorePointBtn)
-$grpPower.Controls.Add($powerSlider)
+$grpRestore.Controls.AddRange(@($createRestoreBtn, $removeRestoreBtn))
 
 # Add groups to Performance tab
 $tabPerformance.Controls.AddRange(@($grpRestore, $grpPower))
@@ -790,6 +1097,48 @@ $tabControl.Controls.Add($tabPerformance)
 $form.Controls.Add($tabControl)
 $form.Controls.Add($statusLabel)
 
+# Create animated status bar
+$statusBar = New-Object System.Windows.Forms.Panel
+$statusBar.Size = New-Object System.Drawing.Size(980, 5)
+$statusBar.Location = New-Object System.Drawing.Point(10, 770)
+$statusBar.BackColor = [System.Drawing.Color]::FromArgb(40, 40, 45)
+
+$statusProgress = New-Object System.Windows.Forms.Panel
+$statusProgress.Size = New-Object System.Drawing.Size(0, 5)
+$statusProgress.Location = New-Object System.Drawing.Point(0, 0)
+$statusProgress.BackColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
+
+$statusBar.Controls.Add($statusProgress)
+$form.Controls.Add($statusBar)
+
+# Function to show progress animation
+function Show-ProgressAnimation {
+    param(
+        [string]$status,
+        [int]$duration = 1000
+    )
+    
+    $statusLabel.Text = $status
+    $statusProgress.Width = 0
+    $statusProgress.Visible = $true
+    
+    $timer = New-Object System.Windows.Forms.Timer
+    $timer.Interval = 10
+    $progress = 0
+    
+    $timer.Add_Tick({
+        $progress += 1
+        $statusProgress.Width = [Math]::Min([Math]::Floor($statusBar.Width * ($progress / 100)), $statusBar.Width)
+        if ($progress -ge 100) {
+            $timer.Stop()
+            $statusProgress.Width = 0
+        }
+        $form.Refresh()
+    })
+    
+    $timer.Start()
+}
+
 # Complete loading
 $progressBar.Value = 100
 $loadingLabel.Text = 'Ready!'
@@ -799,3 +1148,27 @@ $loadingForm.Close()
 # Show the form
 $form.Icon = $appIcon
 $form.ShowDialog()
+
+# Add hover effects to buttons
+function Add-ButtonHoverEffect {
+    param($button)
+    
+    $originalColor = $button.BackColor
+    $hoverColor = [System.Drawing.Color]::FromArgb(
+        [Math]::Min(255, $originalColor.R + 20),
+        [Math]::Min(255, $originalColor.G + 20),
+        [Math]::Min(255, $originalColor.B + 20)
+    )
+    
+    $button.Add_MouseEnter({ $this.BackColor = $hoverColor })
+    $button.Add_MouseLeave({ $this.BackColor = $originalColor })
+    
+    # Add click animation
+    $button.Add_MouseDown({ $this.BackColor = $originalColor })
+    $button.Add_MouseUp({ $this.BackColor = $hoverColor })
+}
+
+# Apply hover effects to all buttons
+$form.Controls | Where-Object { $_ -is [System.Windows.Forms.Button] } | ForEach-Object {
+    Add-ButtonHoverEffect $_
+}
