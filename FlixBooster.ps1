@@ -142,31 +142,71 @@ $form.StartPosition = "CenterScreen"
 $form.BackColor = [System.Drawing.Color]::FromArgb(25, 25, 30)
 $form.ForeColor = [System.Drawing.Color]::White
 $form.Font = New-Object System.Drawing.Font("Segoe UI", 10)
-$form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
-$form.Padding = New-Object System.Windows.Forms.Padding(10)
+$form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
+$form.WindowState = [System.Windows.Forms.FormWindowState]::Normal
+$form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
 
-# Create a custom title bar panel for branding only
+# Add custom title bar
 $titleBar = New-Object System.Windows.Forms.Panel
-$titleBar.Size = New-Object System.Drawing.Size(1000, 50)
-$titleBar.BackColor = [System.Drawing.Color]::FromArgb(35, 35, 40)
 $titleBar.Dock = [System.Windows.Forms.DockStyle]::Top
+$titleBar.Height = 40
+$titleBar.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 35)
 
-# Add logo/icon to title bar
-$logoIcon = New-Object System.Windows.Forms.PictureBox
-$logoIcon.Size = New-Object System.Drawing.Size(32, 32)
-$logoIcon.Location = New-Object System.Drawing.Point(15, 9)
-$logoIcon.BackColor = [System.Drawing.Color]::Transparent
-$logoIcon.Image = $appIcon.ToBitmap()
-$logoIcon.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::StretchImage
-
+# Add title and controls
 $titleLabel = New-Object System.Windows.Forms.Label
 $titleLabel.Text = "FlixBooster"
-$titleLabel.Font = New-Object System.Drawing.Font("Segoe UI", 16, [System.Drawing.FontStyle]::Bold)
+$titleLabel.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $titleLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
-$titleLabel.Location = New-Object System.Drawing.Point(55, 10)
-$titleLabel.Size = New-Object System.Drawing.Size(200, 30)
+$titleLabel.AutoSize = $true
+$titleLabel.Location = New-Object System.Drawing.Point(10, 10)
 
-$titleBar.Controls.AddRange(@($logoIcon, $titleLabel))
+# Add minimize and close buttons
+$closeButton = New-Object System.Windows.Forms.Button
+$closeButton.Text = "×"
+$closeButton.Size = New-Object System.Drawing.Size(40, 40)
+$closeButton.Location = New-Object System.Drawing.Point($form.Width - 40, 0)
+$closeButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$closeButton.ForeColor = [System.Drawing.Color]::White
+$closeButton.Font = New-Object System.Drawing.Font("Segoe UI", 16)
+$closeButton.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 35)
+
+$minimizeButton = New-Object System.Windows.Forms.Button
+$minimizeButton.Text = "−"
+$minimizeButton.Size = New-Object System.Drawing.Size(40, 40)
+$minimizeButton.Location = New-Object System.Drawing.Point($form.Width - 80, 0)
+$minimizeButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$minimizeButton.ForeColor = [System.Drawing.Color]::White
+$minimizeButton.Font = New-Object System.Drawing.Font("Segoe UI", 16)
+$minimizeButton.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 35)
+
+# Add button events
+$closeButton.Add_Click({ $form.Close() })
+$minimizeButton.Add_Click({ $form.WindowState = [System.Windows.Forms.FormWindowState]::Minimized })
+
+# Add hover effects
+$closeButton.Add_MouseEnter({ $this.BackColor = [System.Drawing.Color]::FromArgb(232, 17, 35) })
+$closeButton.Add_MouseLeave({ $this.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 35) })
+$minimizeButton.Add_MouseEnter({ $this.BackColor = [System.Drawing.Color]::FromArgb(50, 50, 55) })
+$minimizeButton.Add_MouseLeave({ $this.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 35) })
+
+# Add controls to title bar
+$titleBar.Controls.AddRange(@($titleLabel, $minimizeButton, $closeButton))
+
+# Make form draggable
+$titleBar.Add_MouseDown({
+    $script:dragging = $true
+    $script:offset = New-Object System.Drawing.Point($form.Location.X - [System.Windows.Forms.Cursor]::Position.X, $form.Location.Y - [System.Windows.Forms.Cursor]::Position.Y)
+})
+
+$titleBar.Add_MouseMove({
+    if ($script:dragging) {
+        $form.Location = New-Object System.Drawing.Point([System.Windows.Forms.Cursor]::Position.X + $script:offset.X, [System.Windows.Forms.Cursor]::Position.Y + $script:offset.Y)
+    }
+})
+
+$titleBar.Add_MouseUp({ $script:dragging = $false })
+
+# Add title bar to form
 $form.Controls.Add($titleBar)
 
 # Create tabs with modern styling
@@ -311,35 +351,38 @@ $checkListDebloat.Add_DrawItem({
     
     if ($e.Index -lt 0) { return }
     
-    $item = $bloatwareApps[$e.Index]  # Changed from $sender.Items[$e.Index]
-    $isInstalled = Test-AppInstalled -AppName $item.Name
+    $app = $bloatwareApps[$e.Index]
+    $isInstalled = Test-AppInstalled -AppName $app.Name
     
     # Draw background
-    $e.DrawBackground()
+    if ($sender.GetItemChecked($e.Index)) {
+        $e.Graphics.FillRectangle([System.Drawing.Brushes]::FromArgb(40, 40, 45), $e.Bounds)
+    } else {
+        $e.DrawBackground()
+    }
     
-    # Draw status circle with better styling
-    $circleRect = New-Object System.Drawing.Rectangle($e.Bounds.X + 5, $e.Bounds.Y + 5, 20, 20)
+    # Draw status circle
+    $circleSize = 16
+    $circleY = $e.Bounds.Y + ($e.Bounds.Height - $circleSize) / 2
+    $circleRect = New-Object System.Drawing.Rectangle($e.Bounds.X + 10, $circleY, $circleSize, $circleSize)
+    
     $circleBrush = New-Object System.Drawing.SolidBrush($(if ($isInstalled) { 
-        [System.Drawing.Color]::FromArgb(46, 204, 113) # Green for installed
+        [System.Drawing.Color]::FromArgb(46, 204, 113) # Green
     } else { 
-        [System.Drawing.Color]::FromArgb(231, 76, 60) # Red for not installed
+        [System.Drawing.Color]::FromArgb(231, 76, 60) # Red
     }))
     
-    # Add a white border around the circle
-    $borderPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(60, 60, 65), 2)
+    $e.Graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
     $e.Graphics.FillEllipse($circleBrush, $circleRect)
-    $e.Graphics.DrawEllipse($borderPen, $circleRect)
     
-    # Draw text with better padding and font
+    # Draw text
     $textBrush = New-Object System.Drawing.SolidBrush($sender.ForeColor)
     $textPoint = New-Object System.Drawing.Point($e.Bounds.X + 35, $e.Bounds.Y + 5)
     $e.Graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::ClearTypeGridFit
-    $e.Graphics.DrawString($item.Description, $e.Font, $textBrush, $textPoint)
+    $e.Graphics.DrawString($app.Description, $sender.Font, $textBrush, $textPoint)
     
-    # Clean up
     $circleBrush.Dispose()
     $textBrush.Dispose()
-    $borderPen.Dispose()
 })
 
 # Tweaks tab
@@ -1016,47 +1059,57 @@ $grpPower.ForeColor = [System.Drawing.Color]::White
 $grpPower.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $grpPower.BackColor = [System.Drawing.Color]::FromArgb(40, 40, 45)
 
-# Create power plan buttons instead of slider
-$btnPowerSaver = New-Object System.Windows.Forms.Button
-$btnBalanced = New-Object System.Windows.Forms.Button
-$btnPerformance = New-Object System.Windows.Forms.Button
-$btnUltimate = New-Object System.Windows.Forms.Button
-
+# Create power buttons instead of slider
 $powerButtons = @(
-    @{ Button=$btnPowerSaver; Text="Power Saver"; Color=[System.Drawing.Color]::FromArgb(40, 167, 69); GUID="a1841308-3541-4fab-bc81-f71556f20b4a" },
-    @{ Button=$btnBalanced; Text="Balanced"; Color=[System.Drawing.Color]::FromArgb(0, 123, 255); GUID="381b4222-f694-41f0-9685-ff5bb260df2e" },
-    @{ Button=$btnPerformance; Text="Performance"; Color=[System.Drawing.Color]::FromArgb(255, 193, 7); GUID="8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c" },
-    @{ Button=$btnUltimate; Text="Ultimate Performance"; Color=[System.Drawing.Color]::FromArgb(220, 53, 69); GUID="e9a42b02-d5df-448d-aa00-03f14749eb61" }
+    @{
+        Name = "Power Saver"
+        GUID = "a1841308-3541-4fab-bc81-f71556f20b4a"
+        Color = [System.Drawing.Color]::FromArgb(40, 167, 69)
+    },
+    @{
+        Name = "Balanced"
+        GUID = "381b4222-f694-41f0-9685-ff5bb260df2e"
+        Color = [System.Drawing.Color]::FromArgb(0, 123, 255)
+    },
+    @{
+        Name = "High Performance"
+        GUID = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
+        Color = [System.Drawing.Color]::FromArgb(255, 193, 7)
+    },
+    @{
+        Name = "Ultimate Performance"
+        GUID = "e9a42b02-d5df-448d-aa00-03f14749eb61"
+        Color = [System.Drawing.Color]::FromArgb(220, 53, 69)
+    }
 )
 
 $buttonX = 20
-foreach ($powerBtn in $powerButtons) {
-    $powerBtn.Button.Text = $powerBtn.Text
-    $powerBtn.Button.Size = New-Object System.Drawing.Size(220, 50)
-    $powerBtn.Button.Location = New-Object System.Drawing.Point($buttonX, 40)
-    $powerBtn.Button.BackColor = $powerBtn.Color
-    $powerBtn.Button.ForeColor = [System.Drawing.Color]::White
-    $powerBtn.Button.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-    $powerBtn.Button.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-    $powerBtn.Button.Cursor = [System.Windows.Forms.Cursors]::Hand
+foreach ($plan in $powerButtons) {
+    $button = New-Object System.Windows.Forms.Button
+    $button.Text = $plan.Name
+    $button.Size = New-Object System.Drawing.Size(220, 50)
+    $button.Location = New-Object System.Drawing.Point($buttonX, 40)
+    $button.BackColor = $plan.Color
+    $button.ForeColor = [System.Drawing.Color]::White
+    $button.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $button.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+    $button.Tag = $plan.GUID
     
-    $powerBtn.Button.Add_Click({
-        $btnData = $powerButtons | Where-Object { $_.Button -eq $this }
+    $button.Add_Click({
+        $guid = $this.Tag
         try {
-            if ($btnData.Text -eq "Ultimate Performance") {
+            if ($this.Text -eq "Ultimate Performance") {
                 powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null
                 Start-Sleep -Milliseconds 500
             }
-            powercfg /setactive $btnData.GUID 2>$null
-            $statusLabel.Text = "Power plan changed to $($btnData.Text)"
-            $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 255, 0)
+            powercfg /setactive $guid
+            Show-ProgressAnimation -status "Power plan changed to $($this.Text)" -duration 1000
         } catch {
-            $statusLabel.Text = "Failed to change power plan"
-            $statusLabel.ForeColor = [System.Drawing.Color]::Red
+            Show-ProgressAnimation -status "Failed to change power plan" -duration 1000
         }
     })
     
-    $grpPower.Controls.Add($powerBtn.Button)
+    $grpPower.Controls.Add($button)
     $buttonX += 230
 }
 
