@@ -291,10 +291,10 @@ $bloatwareApps = @(
 )
 
 foreach ($app in $bloatwareApps) {
-    $checkListDebloat.Items.Add($app, $false)
+    $checkListDebloat.Items.Add($app.Description, $false)
 }
 
-# Modify the CheckedListBox to show installation status
+# Modify the DrawItem event handler
 $checkListDebloat.DrawMode = [System.Windows.Forms.DrawMode]::OwnerDrawFixed
 $checkListDebloat.Add_DrawItem({
     param($sender, $e)
@@ -310,15 +310,15 @@ $checkListDebloat.Add_DrawItem({
     # Draw status circle
     $circleRect = New-Object System.Drawing.Rectangle($e.Bounds.X + 5, $e.Bounds.Y + 5, 20, 20)
     $circleBrush = New-Object System.Drawing.SolidBrush($(if ($isInstalled) { 
-        [System.Drawing.Color]::FromArgb(46, 204, 113) 
+        [System.Drawing.Color]::FromArgb(46, 204, 113) # Green for installed
     } else { 
-        [System.Drawing.Color]::FromArgb(231, 76, 60) 
+        [System.Drawing.Color]::FromArgb(231, 76, 60) # Red for not installed
     }))
     $e.Graphics.FillEllipse($circleBrush, $circleRect)
     
-    # Draw text
+    # Draw text with padding after the circle
     $textBrush = New-Object System.Drawing.SolidBrush($sender.ForeColor)
-    $textPoint = New-Object System.Drawing.Point($e.Bounds.X + 30, $e.Bounds.Y + 5)
+    $textPoint = New-Object System.Drawing.Point($e.Bounds.X + 35, $e.Bounds.Y + 5)
     $e.Graphics.DrawString($app.Description, $e.Font, $textBrush, $textPoint)
     
     # Draw checkbox
@@ -456,7 +456,10 @@ $btnSelectAllTweaks.Cursor = [System.Windows.Forms.Cursors]::Hand
 
 # Add button click events
 $btnRemoveSelected.Add_Click({
-    $criticalApps = $checkListDebloat.CheckedItems | Where-Object { Test-CriticalApp $_.Name }
+    $selectedIndices = $checkListDebloat.CheckedIndices
+    $selectedApps = $selectedIndices | ForEach-Object { $bloatwareApps[$_] }
+    
+    $criticalApps = $selectedApps | Where-Object { Test-CriticalApp $_.Name }
     if ($criticalApps) {
         $warningMessage = "Warning: You are about to remove some critical system apps:`n`n"
         $warningMessage += ($criticalApps.Description -join "`n")
@@ -476,21 +479,20 @@ $btnRemoveSelected.Add_Click({
     $statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(0, 122, 204)
     $form.Refresh()
     
-    $selectedApps = $checkListDebloat.CheckedItems
     $total = $selectedApps.Count
     $current = 0
     
     foreach ($app in $selectedApps) {
         try {
             $current++
-            $statusLabel.Text = ('Removing {0}... ({1} of {2})' -f $app, $current, $total)
+            $statusLabel.Text = ('Removing {0}... ({1} of {2})' -f $app.Description, $current, $total)
             $form.Refresh()
             
-            Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage
+            Get-AppxPackage -Name $app.Name -AllUsers | Remove-AppxPackage
             Start-Sleep -Milliseconds 100
         }
         catch {
-            $statusLabel.Text = ('Failed to remove {0}' -f $app)
+            $statusLabel.Text = ('Failed to remove {0}' -f $app.Description)
             $statusLabel.ForeColor = [System.Drawing.Color]::Red
         }
     }
@@ -503,6 +505,9 @@ $btnRemoveSelected.Add_Click({
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Information
     )
+    
+    # Refresh the list to update status indicators
+    $checkListDebloat.Refresh()
 })
 
 $btnSelectAll.Add_Click({
